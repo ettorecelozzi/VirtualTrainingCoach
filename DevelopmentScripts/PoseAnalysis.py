@@ -6,35 +6,6 @@ from scipy.signal import argrelextrema
 from scipy import linalg as la
 
 
-def serializeKeyPointsSequence(keyPointsSequence, weights=None):
-    # TODO probably all the function can be replaced with np.reshape as in extracyclebyDTW
-    """
-    The DTW is between two time sequences of points, but we have sequences of frames ( that are lists of points ) and we
-    can't do the DTW between sequnces of sequences of points. The sequences of frame are serialized, meaning that
-    for each frame we decouple each (x,y) so that a frame that at the beginning is [(x1,y1)(x2,y2)...] will became
-    [x1,y1,x2,y2,...]
-    :param keyPointsSequence: keypoints numpy array
-    :param weights: weights of the joints
-    :return: keypoints serialized
-    """
-    res = []
-    for keyPointsFrame in keyPointsSequence:
-        framePoints = []
-        pointIndex = 0
-        for point in keyPointsFrame:
-            if weights is not None:
-                if weights[pointIndex][1] != 0.0:
-                    framePoints.append(point[0])
-                    framePoints.append(point[1])
-            else:
-                framePoints.append(point[0])
-                framePoints.append(point[1])
-            pointIndex += 1
-        res.append(framePoints)
-    res = np.array(res)
-    return res
-
-
 def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     """
     TODO: verify (not modified)
@@ -250,7 +221,7 @@ def getPointsAngles(means, weights):
 
     anglesSerialized = np.asarray(angles)[:, :, 1:]
     anglesSerialized = anglesSerialized.astype(float).reshape(anglesSerialized.shape[0],
-                                                    anglesSerialized.shape[1] * anglesSerialized.shape[2])
+                                                              anglesSerialized.shape[1] * anglesSerialized.shape[2])
     return np.asarray(angles), anglesSerialized
 
 
