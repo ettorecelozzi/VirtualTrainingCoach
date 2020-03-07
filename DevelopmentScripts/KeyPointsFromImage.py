@@ -9,7 +9,7 @@ def plotKeyPointsImage(videoname, frameNumber, op, opWrapper, user=False):  # fr
     :param frameNumber: int. Index in the frames folder
     :param op: Openpose tool from initialization
     :param opWrapper: Openpose tool from initialization
-    :param user: boolean to specify if the video is for the user
+    :param user: boolean to specify if the video is for the User
     :return: output skeleton
     """
     if user is False:

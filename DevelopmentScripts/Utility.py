@@ -10,34 +10,12 @@ import cv2
 import shutil
 
 
-def compareChecker(trainerMeans, userMeans, path, weights, errorAllowed=10, angles=False):
-    wrongPoses = PoseAnalysis.checkByGramMatrix(path, trainerMeans, userMeans, 10, angles)
-    print('\nWrong poses by gram matrix checker')
-    if len(wrongPoses) < (len(userMeans) // 2):
-        print("\nYou have done a great work, errors:", len(wrongPoses))
-    else:
-        print("\nYou sucks, errors:", len(wrongPoses))
-    print('\nTotal Poses: ', len(path))
-    print('\n')
-
-    wrongPosesAng, wrongPosesAngIndex = PoseAnalysis.checkByAngles(trainerMeans, userMeans, weights, errorAllowed,
-                                                                   path)
-    # print('\nWrong poses by trainer and user angles comparision\n\n', wrongPosesAng)
-    print('\nWrong poses by trainer and user angles comparision')
-    if len(wrongPosesAng) < (len(userMeans) // 2):
-        print("\nYou have done a great work, errors:", len(wrongPosesAng))
-    else:
-        print("\nYou sucks, errors:", len(wrongPosesAng))
-    print('\nTotal Poses: ', len(path))
-    return wrongPosesAngIndex, wrongPoses
-
-
 def plotKeyPointsPose(keypoints, userMeanKeypoints, path, videoname, min, userMin, op, opWrapper,
                       wrongPosesMeanSTDIndex,
                       wrongPosesAngIndex,
                       plotKeypointsLabel=False, plotHeadKeypoint=True, plotFeetKeypoint=True):
     """
-    Function that given the aligned trainer-user path plot the poses of each one
+    Function that given the aligned trainer-User path plot the poses of each one
     """
     plt.style.use('dark_background')
     # coordinates of the points to tie
@@ -224,3 +202,31 @@ def plotPoseForAngles(pathAngles, videoname, min, userMin, op, opWrapper, wrongP
             plt.show()
             plt.close()
         countPose += 1
+
+
+def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):
+    """
+    Call in a loop to create terminal progress bar
+    Print fancy progress bars. From Greenstick at StackOverflow
+    https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    usage:
+    for i in range(workamount):
+        doWork(i)
+        printProgressBar(i, workamount)
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end=printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()

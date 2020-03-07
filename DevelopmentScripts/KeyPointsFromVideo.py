@@ -45,21 +45,21 @@ def getSkeletonPoints(videoname, folder, op, opWrapper, rotate=False):
     :param rotate: boolean to specify if a rotation is needed
     :return: boolean, extraction successful or not
     """
-    cam = cv2.VideoCapture('./Video/' + videoname + '.mp4')
+    cam = cv2.VideoCapture('./Videos/' + videoname + '.mp4')
 
     # creating frames' folder
-    if os.path.exists('frames/' + videoname):
-        shutil.rmtree('./frames/' + videoname + '/')
-    os.makedirs('frames/' + videoname)
+    if os.path.exists('Frames/' + videoname):
+        shutil.rmtree('./Frames/' + videoname + '/')
+    os.makedirs('Frames/' + videoname)
 
     # frame
     currentframe = -1  # starting frame (increment done before the iteration)
     frameFrequency = 0
+    keypoints = []
     while True:
 
         # reading from frame
         ret, frame = cam.read()
-
         if ret:
             currentframe += 1
             if frameFrequency == 0 or currentframe % frameFrequency == 0:
@@ -83,12 +83,17 @@ def getSkeletonPoints(videoname, folder, op, opWrapper, rotate=False):
                 # cv2.imshow("frame" + str(currentframe), img)
                 # cv2.waitKey(0)
                 # cv2.destroyAllWindows()
-                np.save('./KeyPoints/' + '/' + folder + '/' + videoname + '.npy', datum.poseKeypoints)
+                if datum.poseKeypoints.size > 1:
+                    keypoints.append(datum.poseKeypoints[0][:, :2])  # list append is faster than numpy append
+                else:
+                    keypoints.append(np.zeros((25, 2)))
         else:
             if currentframe == -1:
                 print("Video not found")
                 return
             else:
+                keypoints = np.asarray(keypoints)  # numpy arrays are more handy and memory efficient
+                np.save('./KeyPoints/' + folder + '/' + videoname + '.npy', keypoints)
                 print("\nVideo ended\n")
                 # Release all space and windows once done
                 cam.release()

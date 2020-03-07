@@ -7,6 +7,7 @@ from scipy import linalg as la
 
 
 def serializeKeyPointsSequence(keyPointsSequence, weights=None):
+    # TODO probably all the function can be replaced with np.reshape as in extracyclebyDTW
     """
     The DTW is between two time sequences of points, but we have sequences of frames ( that are lists of points ) and we
     can't do the DTW between sequnces of sequences of points. The sequences of frame are serialized, meaning that
@@ -28,7 +29,6 @@ def serializeKeyPointsSequence(keyPointsSequence, weights=None):
             else:
                 framePoints.append(point[0])
                 framePoints.append(point[1])
-
             pointIndex += 1
         res.append(framePoints)
     res = np.array(res)
@@ -90,7 +90,7 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
     :param slidingWindowsDimension: int
     :param keyPoints: array
     :param plotChart: boolean to decide if plot the chart of the cycle extraction
-    :param sequence1: array. Used to extract cycle of the user
+    :param sequence1: array. Used to extract cycle of the User
     :param user: boolean. User case
     :return: bound of the cycles
     """
@@ -98,14 +98,16 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
     # take the first window
     if sequence1 is None:
         sequence1 = keyPoints[t:t + slidingWindowsDimension]
-    sequence1 = serializeKeyPointsSequence(sequence1)
+    # sequence1 = serializeKeyPointsSequence(sequence1)
+    sequence1 = np.reshape(sequence1, (sequence1.shape[0], sequence1.shape[1] * sequence1.shape[2]))
 
     x = np.array([])
     y = np.array([])
     # slide the sliding window and perform the dtw distance
     for t in range(t, keyPoints.shape[0] - slidingWindowsDimension):
         sequence2 = keyPoints[t:t + slidingWindowsDimension]
-        sequence2 = serializeKeyPointsSequence(sequence2)
+        # sequence2 = serializeKeyPointsSequence(sequence2)
+        sequence2 = np.reshape(sequence2, (sequence2.shape[0], sequence2.shape[1] * sequence2.shape[2]))
         distance, path = dtw.fastdtw(sequence1, sequence2, dist=euclidean)
         x = np.append(x, t)
         y = np.append(y, distance)
@@ -122,7 +124,7 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
     :param slidingWindowsDimension: int
     :param keyPoints: array of keypoints
     :param plotChart: boolean to decide if plot the chart of the cycle extraction
-    :param sequence1: array. Used to extract cycle of the user
+    :param sequence1: array. Used to extract cycle of the User
     :return: bound of the cycles
     """
     t = 0
@@ -150,8 +152,8 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
 
 def getMeanMeasures(keyPointsSequence, meanRange):
     """
-    Return the mean measures in a neighborhood(meanRange) of the central frame of the torso distance (for scale normalization),
-    midhip x and midhip y (for traslation normalization)
+    Return the mean measures in a neighborhood(meanRange) of the central frame of the torso distance
+    (for scale normalization), midhip x and midhip y (for traslation normalization)
     :param keyPointsSequence: keypoints array (#frames, 25, 2)
     :param meanRange: int. range to consider for the mean
     :return: mean torso, mean midHipx, mean midHipy
@@ -173,6 +175,36 @@ def getMeanMeasures(keyPointsSequence, meanRange):
         torsoMeasures = np.append(torsoMeasures, euclidean(neck, midhip))
     # return the means
     return np.mean(torsoMeasures), np.mean(midhipxMeasures), np.mean(midhipyMeasures)
+
+
+def checkExerciseByMeanInStdRange(trainerMeans, stds, userMeans, weights, path, errorStd, angles=False):
+    wrongPoses = []
+    wrongPosesIndex = [0] * len(path)
+    for couple in range(len(path)):
+        trainerPose = path[couple][0]
+        userPose = path[couple][1]
+        error = 0
+        keypointsWrong = []
+        for keypoint in range(0, len(trainerMeans[trainerPose])):
+            # define for each point the range of standard deviation of the trainer mean using a factor 3 as permitted
+            # error coefficent and using the weights
+            stdRangeXp = (trainerMeans[trainerPose][keypoint][0] + stds[trainerPose][keypoint][0])
+            stdRangeXm = (trainerMeans[trainerPose][keypoint][0] - stds[trainerPose][keypoint][0])
+            if angles is False:
+                stdRangeYp = (trainerMeans[trainerPose][keypoint][1] + stds[trainerPose][keypoint][1])
+                stdRangeYm = (trainerMeans[trainerPose][keypoint][1] - stds[trainerPose][keypoint][1])
+                userMeanY = userMeans[userPose][keypoint][1]
+            userMeanX = userMeans[userPose][keypoint][0]
+
+            # control condition
+            if (stdRangeXm > userMeanX or stdRangeXp < userMeanX) or (
+                    angles is False and (stdRangeYm > userMeanY or stdRangeYp < userMeanY)):
+                error += weights[keypoint][1]
+                keypointsWrong.append(keypoint)
+        if error > errorStd:
+            wrongPoses.append([trainerPose, keypointsWrong, 'Error weight: ' + str(round(error, 3))])
+            wrongPosesIndex[couple] = -1
+    return wrongPoses, wrongPosesIndex
 
 
 # pass keypoints to test it!
@@ -213,17 +245,23 @@ def getPointsAngles(means, weights):
                 # list of: joint linked to neck, angle formed with torso, each long 25
                 frameAngles.append([strAngle, angle])
         angles.append(frameAngles)
-    return np.asarray(angles)
+
+    # return np.asarray(angles)  # to check the joints that form the angle
+
+    anglesSerialized = np.asarray(angles)[:, :, 1:]
+    anglesSerialized = anglesSerialized.astype(float).reshape(anglesSerialized.shape[0],
+                                                    anglesSerialized.shape[1] * anglesSerialized.shape[2])
+    return np.asarray(angles), anglesSerialized
 
 
 def checkByAngles(trainerMeans, userMeans, weights, errorRange, path):
     """
-    For each keypoint the angle of the trainer is compared with the angle of the user
+    For each keypoint the angle of the trainer is compared with the angle of the User
     :param trainerMeans: array. Mean poses of the trainer
-    :param userMeans: array. Mean poses of the user
+    :param userMeans: array. Mean poses of the User
     :param weights: array. Weights of the joint
     :param errorRange: error allowed
-    :param path: path of the aligned user trainer
+    :param path: path of the aligned User trainer
     :return:
     """
     angles = getPointsAngles(trainerMeans, weights)
@@ -247,7 +285,7 @@ def checkByAngles(trainerMeans, userMeans, weights, errorRange, path):
             wrongPoses.append([trainerPose, keypointsWrong, 'Error weight: ' + str(round(error, 3))])
             wrongPosesIndex[couple] = - 1
     # print('trainer angles:', angles)
-    # print('user angles:', userAngles)
+    # print('User angles:', userAngles)
     return wrongPoses, wrongPosesIndex
 
 
@@ -267,7 +305,7 @@ def getGramDistance(pose_descriptor_1, pose_descriptor_2):
     return distance
 
 
-def getDescriptor(Pose, means, angles):
+def getDescriptor(pose, means, angles):
     """
 
     :param Pose:
@@ -276,10 +314,10 @@ def getDescriptor(Pose, means, angles):
     :return:
     """
     poseDescriptor = np.empty(shape=[25, 2])
-    for i in range(0, len(means[Pose])):
-        poseDescriptor[i][0] = means[Pose][i][0]
+    for i in range(len(means[pose])):
+        poseDescriptor[i][0] = means[pose][i][0]
         if not angles:
-            poseDescriptor[i][1] = means[Pose][i][1]
+            poseDescriptor[i][1] = means[pose][i][1]
     return poseDescriptor
 
 
@@ -303,3 +341,39 @@ def checkByGramMatrix(path, trainerMeans, userMeans, distance_error, angles):
         if distance > distance_error:
             posesWrong.append([trainerPose, userPose])  # number of errors is equal to the length of the poseWrong list
     return posesWrong
+
+
+def compareChecker(trainerMeans, userMeans, stds, path, weights, errorStd, errorAllowed=10, angles=False):
+    wrongPosesMeaninStd, wrongPosesMinSTDIndex = checkExerciseByMeanInStdRange(trainerMeans, stds,
+                                                                               userMeans,
+                                                                               weights, path, errorStd,
+                                                                               angles)
+    # print('\nWrong poses by user mean in std deviation trainer range\n\n', wrongPosesMeaninStd)
+    print('\nWrong poses by user mean in std deviation trainer range')
+    if len(wrongPosesMeaninStd) < (len(userMeans) // 2):
+        print("\nYou have done a great work, errors:", len(wrongPosesMeaninStd))
+    else:
+        print("\nYou sucks, errors:", len(wrongPosesMeaninStd))
+    print('\nTotal Poses: ', len(path))
+    print('\n')
+
+    if angles is False:
+        wrongPoses = checkByGramMatrix(path, trainerMeans, userMeans, 10, angles)
+        print('\nWrong poses by gram matrix checker')
+        if len(wrongPoses) < (len(userMeans) // 2):
+            print("\nYou have done a great work, errors:", len(wrongPoses))
+        else:
+            print("\nYou sucks, errors:", len(wrongPoses))
+        print('\nTotal Poses: ', len(path))
+        print('\n')
+
+        # wrongPosesAng, wrongPosesAngIndex = checkByAngles(trainerMeans, userMeans, weights, errorAllowed, path)
+        # # print('\nWrong poses by trainer and User angles comparision\n\n', wrongPosesAng)
+        # print('\nWrong poses by trainer and User angles comparision')
+        # if len(wrongPosesAng) < (len(userMeans) // 2):
+        #     print("\nYou have done a great work, errors:", len(wrongPosesAng))
+        # else:
+        #     print("\nYou sucks, errors:", len(wrongPosesAng))
+        # print('\nTotal Poses: ', len(path))
+        # return wrongPosesAngIndex, wrongPoses
+        return wrongPoses
