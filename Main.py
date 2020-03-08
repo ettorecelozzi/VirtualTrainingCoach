@@ -1,7 +1,6 @@
 from DevelopmentScripts import Statistics as stats
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm
-import os
 from DevelopmentScripts import PoseAlignment
 import warnings
 import pickle as pkl
