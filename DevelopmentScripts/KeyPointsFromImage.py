@@ -13,9 +13,9 @@ def plotKeyPointsImage(videoname, frameNumber, op, opWrapper, user=False):  # fr
     :return: output skeleton
     """
     if user is False:
-        imgname = 'frames/' + videoname.split('-')[0] + '/frame' + str(frameNumber) + '.jpg'
+        imgname = 'Frames/' + videoname.split('-')[0] + '/frame' + str(frameNumber) + '.jpg'
     else:
-        imgname = 'frames/' + videoname + '/frame' + str(frameNumber) + '.jpg'
+        imgname = 'Frames/' + videoname + '/frame' + str(frameNumber) + '.jpg'
     # Process Image
     datum = op.Datum()
     imageToProcess = cv2.imread(imgname)
