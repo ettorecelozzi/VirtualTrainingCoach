@@ -83,58 +83,49 @@ def main():
                                                sequence1=trainerCycle, user=True)
     print('\nIndexes of the User cycles: ', userMins)
 
-    print("\nChoose the strategy:\n 1 X-Y Keypoints Strategy \n 2 Angles Strategy \n 0 to execute both")
-    switchcase = input()
+    print('\n************************************** X-Y KEYPOINTS STRATEGY **************************************')
+    #
+    # ********************************* TRAINER *********************************
 
-    ''' 
+    # Align trainer cycles
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        alignedList = PoseAlignment.align1frame1pose(normalizedKeyPoints, mins, weights=None)
 
-            ************************************** X-Y KEYPOINTS STRATEGY ************************************** 
+    # Get Trainer Statistics
+    # pass True at the end of the method to use statistics library to calculate the std dev
+    trainerMeans, stds = stats.removeDuplicateAndGetStat(alignedList, mins, normalizedKeyPoints)
+    np.save('./KeypointsStatistics/Trainer/' + videoname + '_means.npy', trainerMeans)
+    np.save('./KeypointsStatistics/Trainer/' + videoname + '_stds.npy', stds)
 
-    '''
-    if switchcase == str(1) or switchcase == str(0):
-        print('\n************************************** X-Y KEYPOINTS STRATEGY **************************************')
-        #
-        # ********************************* TRAINER *********************************
+    #
+    # ********************************* USER *********************************
 
-        # Align trainer cycles
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            alignedList = PoseAlignment.align1frame1pose(normalizedKeyPoints, mins, weights=None)
+    # Align User cycles
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        alignedUserList = PoseAlignment.align1frame1pose(normalizedUserKeyPoints, userMins, weights=None)
 
-        # Get Trainer Statistics
-        # pass True at the end of the method to use statistics library to calculate the std dev
-        trainerMeans, stds = stats.removeDuplicateAndGetStat(alignedList, mins, normalizedKeyPoints)
-        np.save('./KeypointsStatistics/Trainer/' + videoname + '_means.npy', trainerMeans)
-        np.save('./KeypointsStatistics/Trainer/' + videoname + '_stds.npy', stds)
+    # Get User statistics
+    userMeans, userStds = stats.removeDuplicateAndGetStat(alignedUserList, userMins,
+                                                          normalizedUserKeyPoints)
+    np.save('./KeypointsStatistics/User/' + videoname + '_means.npy', userMeans)
+    np.save('./KeypointsStatistics/User/' + videoname + '_stds.npy', userStds)
 
-        #
-        # ********************************* USER *********************************
+    #
+    # ********************************* ALIGN USER WITH THE TRAINER *********************************
 
-        # Align User cycles
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            alignedUserList = PoseAlignment.align1frame1pose(normalizedUserKeyPoints, userMins, weights=None)
+    # User-trainer alignment
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=FutureWarning)
+        path = PoseAlignment.getDtwPath(trainerMeans, userMeans)
+    #
+    # ********************************* COMPARE USER TRAINER EXERCISE *********************************
 
-        # Get User statistics
-        userMeans, userStds = stats.removeDuplicateAndGetStat(alignedUserList, userMins,
-                                                              normalizedUserKeyPoints)
-        np.save('./KeypointsStatistics/User/' + videoname + '_means.npy', userMeans)
-        np.save('./KeypointsStatistics/User/' + videoname + '_stds.npy', userStds)
-
-        #
-        # ********************************* ALIGN USER WITH THE TRAINER *********************************
-
-        # User-trainer alignment
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            path = PoseAlignment.getDtwPath(trainerMeans, userMeans)
-        #
-        # ********************************* COMPARE USER TRAINER EXERCISE *********************************
-
-        # Compare the trainer and User statistics through the two checker
-        wrongPosesMeanSTDIndex = compareChecker(trainerMeans, userMeans, stds, path,
-                                                weights=weights, errorStd=error,
-                                                errorAllowed=10)
+    # Compare the trainer and User statistics through the two checker
+    wrongPosesMeanSTDIndex = compareChecker(trainerMeans, userMeans, stds, path,
+                                            weights=weights, errorStd=error,
+                                            errorAllowed=10)
 
 if __name__ == '__main__':
     main()
