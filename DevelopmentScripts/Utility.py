@@ -3,11 +3,42 @@ from matplotlib import collections  as mc
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 import os
-
-from DevelopmentScripts import PoseAnalysis
+import numpy as np
 from DevelopmentScripts.KeyPointsFromImage import plotKeyPointsImage
 import cv2
 import shutil
+
+
+def serializeKeyPointsSequence(keyPointsSequence, weights=None):
+    """
+    The DTW is between two time sequences of points, but we have sequences of frames ( that are lists of points ) and we
+    can't do the DTW between sequnces of sequences of points.
+    Solotion: We serialize the sequence of frame, meaning that for each frame we decouple each (x,y) so that a frame that
+    at the beginning is [(x1,y1)(x2,y2)...] will became [x1,y1,x2,y2,...] in that way the dtw is possible
+    :param keyPointsSequence: matrix of keypoints. shape=(#frame,25,2)
+    :param weights: weights list associated to body joints
+    :return: keypoints sequences serialized
+    """
+
+    # return np.reshape(keyPointsSequence, (keyPointsSequence.shape[0],
+    #                                       keyPointsSequence.shape[1] * keyPointsSequence.shape[2]))
+
+    res = []
+    for keyPointsFrame in keyPointsSequence:
+        framePoints = []
+        pointIndex = 0
+        for point in keyPointsFrame:
+            if weights is not None and weights[pointIndex][1] != 0.0:
+                framePoints.append(point[0])
+                framePoints.append(point[1])
+            else:
+                framePoints.append(point[0])
+                framePoints.append(point[1])
+
+            pointIndex += 1
+        res.append(framePoints)
+    res = np.array(res)
+    return res
 
 
 def plotKeyPointsPose(keypoints, userMeanKeypoints, path, videoname, min, userMin, op, opWrapper,

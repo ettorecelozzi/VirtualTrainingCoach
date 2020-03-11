@@ -1,25 +1,17 @@
 import fastdtw as dtw
-from DevelopmentScripts import PoseAnalysis
-import numpy as np
-import DevelopmentScripts.Statistics as stat
+from DevelopmentScripts.Utility import serializeKeyPointsSequence
 
 
-def getDtwPath(frameSequence1, frameSequence2, weights=None, angles=False):
+def getDtwPath(frameSequence1, frameSequence2, weights=None):
     """
     Apply dtw to the frame sequences
     :param frameSequence1: keypoints numpy array
     :param frameSequence2: keypoints numpy array
     :param weights: weights of the exercise
-    :param angles: boolean to specify if the angles are considered
     :return: the path that represent the sequences aligned
     """
-    if angles is False:
-        # frameSequence1 = PoseAnalysis.serializeKeyPointsSequence(frameSequence1, weights)
-        # frameSequence2 = PoseAnalysis.serializeKeyPointsSequence(frameSequence2, weights)
-        frameSequence1 = \
-            np.reshape(frameSequence1, (frameSequence1.shape[0], frameSequence1.shape[1] * frameSequence1.shape[2]))
-        frameSequence2 = \
-            np.reshape(frameSequence2, (frameSequence2.shape[0], frameSequence2.shape[1] * frameSequence2.shape[2]))
+    frameSequence1 = serializeKeyPointsSequence(frameSequence1, weights)
+    frameSequence2 = serializeKeyPointsSequence(frameSequence2, weights)
     distance, path = dtw.dtw(frameSequence1, frameSequence2)
     return path
 
@@ -49,14 +41,13 @@ def findNext(value, paths, pathsIndex):
     return tmp
 
 
-def align1frame1pose(keyPoints, mins, weights=None, angles=False):
+def align1frame1pose(keyPoints, mins, weights=None):
     """
     Given the local mins of the cycles, align the cycles of an exercise execution
     :param keyPoints: numpy array of keypoints (#frames,25,2)
     :param mins: frame value that defines the cycles
     :param weights: weights of the joints
-    :param angles: boolean to specify if the angles are used
-    :return: ???
+    :return: matrix of the poses aligned
     """
     i = 0
     paths = []
@@ -64,7 +55,7 @@ def align1frame1pose(keyPoints, mins, weights=None, angles=False):
         # perform the dtw and get the path
         frameSequence1 = keyPoints[mins[i]:mins[i + 1]]
         frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]]
-        path = getDtwPath(frameSequence1, frameSequence2, weights, angles=angles)
+        path = getDtwPath(frameSequence1, frameSequence2, weights)
 
         unifiedPath = []
         tmp = [path[0]]
