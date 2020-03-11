@@ -50,7 +50,7 @@ def main():
     np.save('./KeyPoints/Trainer/' + videoname + '_normalized.npy', normalizedKeyPoints)
 
     # Extract trainer cycles
-    mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=False)
+    mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=True)
     print('\nIndexes of the Trainer cycles: ', mins)
 
     #
@@ -78,7 +78,7 @@ def main():
     # Define the template (trainerCycle) and extract User cycles
     trainerCycle = normalizedKeyPoints[
                    mins[firstMin_TrainerCycle]: (mins[firstMin_TrainerCycle] + slidingWindowDimension)]
-    userMins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=False,
+    userMins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=True,
                                                sequence1=trainerCycle, user=True)
     print('\nIndexes of the User cycles: ', userMins)
 
@@ -125,6 +125,7 @@ def main():
     wrongPosesMeanSTDIndex = compareChecker(trainerMeans, userMeans, stds, path,
                                             weights=weights, errorStd=error,
                                             errorAllowed=10)
+
 
 if __name__ == '__main__':
     main()

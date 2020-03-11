@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 from scipy import linalg as la
 from DevelopmentScripts.Utility import serializeKeyPointsSequence
+from sklearn.cluster import AgglomerativeClustering
 
 
 def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
@@ -27,14 +28,14 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     ytominimize = np.append(ytominimize, np.inf)
     ytominimize = np.append(ytominimize, y)
     # argrelextrema finds the local mins in a vector (ytominimize) separated by at least radious values
-    localMins = argrelextrema(ytominimize, np.less, order=radius)
+    localMins = argrelextrema(ytominimize, np.less, order=radius)[0]
     realMins = []
     # meany is the value under that the mins found are considered good and the value is taken doing the mean of all the
     # localMins found
-    meany = np.mean(y[localMins[0][1:]])
+    meany = np.mean(y[localMins[1:]])
     testx = np.array([])
     testy = np.array([])
-    for i in localMins[0]:
+    for i in localMins:
         if y[i - 1] < meany + 4:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
@@ -49,6 +50,41 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
         plt.show()
     if (realMins[1] - realMins[0]) > slidingWindowsDimension * 3 and user is True:
         realMins.pop(0)
+    return realMins
+
+
+def findminClustering(radius, x, y, title, plotChart, slidingWindowsDimension, user):
+    """
+    TODO: verify (not modified)
+    Find the local minus values of a vector y using the radius to separate the mins by at least radius values and plot the
+    chart
+    :param radius:
+    :param x:
+    :param y:
+    :param title:
+    :param plotChart:
+    :param slidingWindowsDimension:
+    :param user:
+    :return: list of bounds of cycles (list of int)
+    """
+    ytominimize = np.array([])
+    ytominimize = np.append(ytominimize, np.inf)
+    ytominimize = np.append(ytominimize, y)
+    localMins = argrelextrema(ytominimize, np.less, order=radius)[0]
+    mins = np.asarray([y[i] for i in localMins])
+    mins = np.reshape(mins, newshape=(mins.shape[0], 1))
+    mins = np.insert(mins, 0, values=0, axis=1)
+
+    # Ward variance minimization algorithm used to calculate the distance between the new formed clusters
+    cluster = AgglomerativeClustering(n_clusters=2, affinity='euclidean', linkage='ward')
+    cluster.fit_predict(mins)
+    realMins = [m for l, m in zip(cluster.labels_, localMins) if l == 0]
+    miny = [y[i] for i in realMins]
+    if plotChart:
+        plt.scatter(x, y, color="red")
+        plt.scatter(realMins, miny, color="blue")
+        plt.title(title)
+        plt.show()
     return realMins
 
 
@@ -82,7 +118,7 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(10, x, y, 'Dtw', plotChart, slidingWindowsDimension, user)
+    return findminClustering(10, x, y, 'Dtw', plotChart, slidingWindowsDimension, user)
 
 
 def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
