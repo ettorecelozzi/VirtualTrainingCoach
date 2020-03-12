@@ -5,20 +5,22 @@ from DevelopmentScripts import PoseAlignment
 import warnings
 import pickle as pkl
 from DevelopmentScripts.ExercisesParams import getPickle
-import numpy as np
+from DevelopmentScripts.Utility import *
 from DevelopmentScripts.PoseAnalysis import compareChecker
 
 
 def main():
-    videoname = 'SideStepsJacks'
+    videoname = 'SideSteJacks'
     openposeT = False
     openposeU = False
 
     # params
     getPickle()
+    exerciseParams, cleanName = getCleanName(videoname)
+    print('Exercise name: ' + exerciseParams)
 
-    videonameUser = videoname + '-UserL'
-    params = pkl.load(open('paramsPickle/' + videoname, 'rb'))
+    videonameUser = cleanName + '-UserL'
+    params = pkl.load(open('paramsPickle/' + cleanName, 'rb'))
 
     slidingWindowDimension = params[1]['slidingWindowDimension']
     slidingWindowDimensionUser = params[1]['slidingWindowDimensionUser']
@@ -40,14 +42,14 @@ def main():
         # OpenPose init
         op, opWrapper = opinit()
 
-        getSkeletonPoints(videoname, 'Trainer', op, opWrapper)
+        getSkeletonPoints(cleanName, 'Trainer', op, opWrapper)
         opWrapper.stop()
 
     # Normalize (and save) trainer keypoints through mean value retrieved by the meanRange
-    keyPoints = np.load('./KeyPoints/Trainer/' + videoname + '.npy')
+    keyPoints = np.load('./KeyPoints/Trainer/' + cleanName + '.npy')
     meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keyPoints, meanRange)
     normalizedKeyPoints = norm.normalize(meanTorso, meanHipX, meanHipY, keyPoints.copy())
-    np.save('./KeyPoints/Trainer/' + videoname + '_normalized.npy', normalizedKeyPoints)
+    np.save('./KeyPoints/Trainer/' + cleanName + '_normalized.npy', normalizedKeyPoints)
 
     # Extract trainer cycles
     mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=True)
@@ -94,8 +96,8 @@ def main():
     # Get Trainer Statistics
     # pass True at the end of the method to use statistics library to calculate the std dev
     trainerMeans, stds = stats.removeDuplicateAndGetStat(alignedList, mins, normalizedKeyPoints)
-    np.save('./KeypointsStatistics/Trainer/' + videoname + '_means.npy', trainerMeans)
-    np.save('./KeypointsStatistics/Trainer/' + videoname + '_stds.npy', stds)
+    np.save('./KeypointsStatistics/Trainer/' + cleanName + '_means.npy', trainerMeans)
+    np.save('./KeypointsStatistics/Trainer/' + cleanName + '_stds.npy', stds)
 
     #
     # ********************************* USER *********************************
@@ -108,8 +110,8 @@ def main():
     # Get User statistics
     userMeans, userStds = stats.removeDuplicateAndGetStat(alignedUserList, userMins,
                                                           normalizedUserKeyPoints)
-    np.save('./KeypointsStatistics/User/' + videoname + '_means.npy', userMeans)
-    np.save('./KeypointsStatistics/User/' + videoname + '_stds.npy', userStds)
+    np.save('./KeypointsStatistics/User/' + videonameUser + '_means.npy', userMeans)
+    np.save('./KeypointsStatistics/User/' + videonameUser + '_stds.npy', userStds)
 
     #
     # ********************************* ALIGN USER WITH THE TRAINER *********************************

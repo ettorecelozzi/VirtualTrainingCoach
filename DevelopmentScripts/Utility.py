@@ -7,6 +7,8 @@ import numpy as np
 from DevelopmentScripts.KeyPointsFromImage import plotKeyPointsImage
 import cv2
 import shutil
+from os import listdir
+import difflib
 
 
 def serializeKeyPointsSequence(keyPointsSequence, weights=None):
@@ -39,6 +41,24 @@ def serializeKeyPointsSequence(keyPointsSequence, weights=None):
         res.append(framePoints)
     res = np.array(res)
     return res
+
+
+def getCleanName(videoname, user=False):
+    """
+    Given the name of a video, the closest name in the db is returned.
+    To notice: doesn't scale well with the number of exercise name to check
+    :param videoname: string
+    :param user: boolean. User video or not
+    :return: string. closest exercise name
+    """
+    filesNames = listdir('./paramsPickle')
+    cleanName = difflib.get_close_matches(videoname, filesNames)[0]  # return always the closest match
+
+    videoNames = listdir('./Videos/Trainer') if user is False else listdir('./Videos/User')
+    videoNames = [v.split('.')[0] for v in videoNames]
+    noErrorName = difflib.get_close_matches(videoname, videoNames)[0]
+
+    return cleanName, noErrorName
 
 
 def plotKeyPointsPose(keypoints, userMeanKeypoints, path, videoname, min, userMin, op, opWrapper,
