@@ -36,7 +36,7 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     testx = np.array([])
     testy = np.array([])
     for i in localMins:
-        if y[i - 1] < meany + 4:  # i-1 becuase I added an element in ytominimize
+        if y[i - 1] < meany + 25000:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
             testy = np.append(testy, y[i - 1])
@@ -155,6 +155,37 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
 
     return findmin(10, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
 
+def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
+    """
+    Return the values in terms of frames that corresponds to the start and the end of cycles using the gram distance.
+    The idea is to take a sliding window of a certain dimension (slidingWindowsDimension) that slides along the frames of
+    the video and check the distance with the first window (the initial part of the video with dimensions slidingWindowDimesnion),
+    then perform the gram and get, for each value of t (the shift value), the distance
+    :param slidingWindowsDimension: int
+    :param keyPoints: array of keypoints
+    :param plotChart: boolean to decide if plot the chart of the cycle extraction
+    :param sequence1: array. Used to extract cycle of the User
+    :return: bound of the cycles
+    """
+    t = 0
+    # take the first window
+    if sequence1 is None:
+        sequence1 = keyPoints[t:t + slidingWindowsDimension]
+
+    x = np.array([])
+    y = np.array([])
+    # slide the sliding window
+    for t in range(t, keyPoints.shape[0] - slidingWindowsDimension):
+        sequence2 = keyPoints[t:t + slidingWindowsDimension]
+        distance = 0
+        # perform the gram distance for each frame and sum everything
+        for i in range(0, slidingWindowsDimension):
+            distance = distance + getGramDistance(sequence1[i],sequence2[i])
+        print("t: "+str(t)+" dist: "+str(distance))
+        x = np.append(x, t)
+        y = np.append(y, distance)
+
+    return findmin(10, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
 
 def getMeanMeasures(keyPointsSequence, meanRange):
     """
@@ -211,25 +242,24 @@ def checkExerciseByMeanInStdRange(trainerMeans, stds, userMeans, weights, path, 
     return wrongPoses, wrongPosesIndex
 
 
-def getGramDistance(pose_descriptor_1, pose_descriptor_2):
+def getGramDistance(poseDescriptor1, poseDescriptor2):
     """
-
-    :param pose_descriptor_1:
-    :param pose_descriptor_2:
-    :return:
+    Perform gram distance between two poses
+    :param poseDescriptor1: first pose
+    :param poseDescriptor2: second pose
+    :return: distance between the two poses
     """
-    g1 = np.outer(pose_descriptor_1, pose_descriptor_1.T)
-    g2 = np.outer(pose_descriptor_2, pose_descriptor_2.T)
-    # print('Printing matrix shapes'), print(pose_descriptor_1.shape), print(g1.shape)
-    distance = np.trace(g1) + np.trace(g2) - \
-               2.0 * np.trace(la.fractional_matrix_power(
-        np.dot(la.fractional_matrix_power(g1, 0.5), np.dot(g2, la.fractional_matrix_power(g1, 0.5))), 0.5))
+    g1 = np.outer(poseDescriptor1, poseDescriptor1.T)
+    g2 = np.outer(poseDescriptor2, poseDescriptor2.T)
+    distance = np.trace(g1) + np.trace(g2) - 2.0 * np.trace(
+        la.fractional_matrix_power(np.dot(la.fractional_matrix_power(g1, 0.5),
+                                          np.dot(g2, la.fractional_matrix_power(g1, 0.5))), 0.5))
     return distance
 
 
 def getDescriptor(pose, means):
     """
-
+    ---QUESTO NON SO COSA FACCIA
     :param Pose:
     :param means:
     :return:
@@ -243,12 +273,12 @@ def getDescriptor(pose, means):
 
 def checkByGramMatrix(path, trainerMeans, userMeans, distance_error):
     """
-
-    :param path:
-    :param trainerMeans:
-    :param userMeans:
-    :param distance_error:
-    :return:
+    Check validity of an exercise using the gram distance
+    :param path: dtw path of same poses between trainer and user
+    :param trainerMeans: mean of the trainer poses across all cycles
+    :param userMeans: mean of the user poses across all cycles
+    :param distance_error: error allowed
+    :return: the list of the wrong poses (error greater than the allowed error)
     """
     posesWrong = []
     for couple in range(len(path)):
