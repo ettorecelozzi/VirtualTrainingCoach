@@ -2,6 +2,7 @@ import cv2
 import os
 import shutil
 import numpy as np
+import subprocess
 
 
 def rotate_image(mat, angle):
@@ -45,7 +46,16 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
     :param rotate: boolean to specify if a rotation is needed
     :return: boolean, extraction successful or not
     """
+    video_input_path = './Videos/' + folder + '/' + exerciseName + '/' + videoname + '.mp4'
+    video_output_path = './Videos/' + folder + '/' + exerciseName + '/' + videoname + '_30fps.mp4'
+    c = 'ffmpeg -y -i ' + video_input_path + ' -r 30 -c:v libx264 -b:v 3M -strict -2 -movflags faststart ' \
+        + video_output_path
+    subprocess.call(c, shell=True)
+    os.remove(video_input_path)
+    os.rename(video_output_path, video_input_path)
+
     cam = cv2.VideoCapture('./Videos/' + folder + '/' + exerciseName + '/' + videoname + '.mp4')
+    print('Video fps: ' + str(cam.get(cv2.CAP_PROP_FPS)))
 
     # creating frames' folder
     if os.path.exists('Frames/' + videoname):
