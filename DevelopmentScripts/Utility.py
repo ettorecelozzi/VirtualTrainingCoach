@@ -65,10 +65,9 @@ def plotPoseFromKeypoints(keypoints, ax, color=False):
     """
     Plot poses given keypoints
     :param keypoints: one frame, (25,2)
-    :param pose: int, number of the pose
     :param ax: axis where to plot
     :param color: decide to change or not the color
-    :return: name of the figure saved
+    :return: plt object
     """
 
     colors = ['blue', 'white', 'red'] if color is False else ['green', 'white', 'red']
@@ -130,12 +129,11 @@ def plotPoseFromKeypoints(keypoints, ax, color=False):
 
 def plotFromAlignedList(alignedList, mins, keypoints, videoname):
     """
-
-    :param alignedList:
-    :param mins:
-    :param keypoints:
-    :param videoname:
-    :return:
+    Given alignedList plot all the poses in a list
+    :param alignedList: list of aligned poses
+    :param mins: cycles bounds
+    :param keypoints: keypoints to plot (25,2)
+    :param videoname: string
     """
     plt.style.use('dark_background')
     # alignedList = [['0|0', '0|1', '0|2'], ['1|0', '1|1', '1|2']]  # to test
@@ -158,10 +156,24 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
                 row += 1
             else:
                 column += 1
+    plt.show()
 
 
 def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrainer, min, userMin=None,
                       videonameUser=None, op=None, opWrapper=None):
+    """
+    Given the last path that compare the trainer exercise with the user and plot the poses.
+    :param path: aligned poses
+    :param wrongPoses: indexes of the poses wrong
+    :param keypoints: keypoints, (25,2)
+    :param keypointsUser: user keypoints, (25,2)
+    :param videonameTrainer: string
+    :param min: min
+    :param userMin: user min
+    :param videonameUser: string
+    :param op: Openpose tool
+    :param opWrapper: Openpose tool
+    """
     plt.style.use('dark_background')
     videonameUser = videonameTrainer if videonameUser is None else videonameUser
     userMin = min if userMin is None else userMin
