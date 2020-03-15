@@ -42,7 +42,7 @@ def main():
         # OpenPose init
         op, opWrapper = opinit()
 
-        getSkeletonPoints(cleanName, 'Trainer', op, opWrapper)
+        getSkeletonPoints(cleanName, 'Trainer', cleanName, op, opWrapper)
         opWrapper.stop()
 
     # Normalize (and save) trainer keypoints through mean value retrieved by the meanRange
@@ -52,7 +52,7 @@ def main():
     np.save('./KeyPoints/Trainer/' + cleanName + '_normalized.npy', normalizedKeyPoints)
 
     # Extract trainer cycles
-    mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=True)
+    mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=False)
     print('\nIndexes of the Trainer cycles: ', mins)
 
     #
@@ -66,9 +66,9 @@ def main():
         op, opWrapper = opinit()
         rotate = input("\nDo you want to rotate the video? Y/N ")
         if rotate.lower() == 'y':
-            getSkeletonPoints(videonameUser, 'User', op, opWrapper, True)
+            getSkeletonPoints(videonameUser, 'User', cleanName, op, opWrapper, True)
         else:
-            getSkeletonPoints(videonameUser, 'User', op, opWrapper)
+            getSkeletonPoints(videonameUser, 'User', cleanName, op, opWrapper)
         opWrapper.stop()
 
     # Normalize (and save) User keypoints through mean value retrieved by the meanRange
@@ -80,7 +80,7 @@ def main():
     # Define the template (trainerCycle) and extract User cycles
     trainerCycle = normalizedKeyPoints[
                    mins[firstMin_TrainerCycle]: (mins[firstMin_TrainerCycle] + slidingWindowDimension)]
-    userMins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=True,
+    userMins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=False,
                                                sequence1=trainerCycle, user=True)
     print('\nIndexes of the User cycles: ', userMins)
 
@@ -92,6 +92,8 @@ def main():
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=FutureWarning)
         alignedList = PoseAlignment.align1frame1pose(normalizedKeyPoints, mins, weights=None)
+
+    plotFromAlignedList(alignedList, mins, normalizedKeyPoints, cleanName)
 
     # Get Trainer Statistics
     # pass True at the end of the method to use statistics library to calculate the std dev
