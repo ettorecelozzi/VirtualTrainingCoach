@@ -135,8 +135,9 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
     # alignedList = [['0|0', '0|1', '0|2'], ['1|0', '1|1', '1|2']]  # to test
     for list in alignedList:
         numOfFigures = len(list) - 1
-        rows = int(np.ceil(numOfFigures / 4))
-        columns = int(np.ceil(numOfFigures / 3))
+        columns = 3
+        rows = int(np.ceil(numOfFigures / 3))
+        #columns = int(np.ceil(numOfFigures / 3)) if int(np.ceil(numOfFigures / 3)) >= 2 else: 2
         mainFig = plt.figure(figsize=(18, 8))
         mainFig.suptitle(videoname)
         gs = mainFig.add_gridspec(rows, columns)
@@ -154,6 +155,34 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
                 column += 1
         plt.show()
 
+def plotIndexOfFit(path, stdsUser, stdsTrainer):
+    trainerM = []
+    userM = []
+    for couple in path:
+        tmpt = []
+        tmpu = []
+        for sublist in stdsTrainer[couple[0]]:
+            for el in sublist:
+                tmpt.append(el)
+        for sublist in stdsUser[couple[1]]:
+            for el in sublist:
+                tmpu.append(el)
+        trainerM.append(sum(tmpt) / len(tmpt))
+        userM.append(sum(tmpu) / len(tmpu))
+        # fitIndex.append((1/trainermean)/(1/usermean))
+    # trainerWeights = 1/trainerM
+    for i in range(0, len(trainerM)):
+        trainerM[i] = 1 / trainerM[i]
+    for i in range(0, len(userM)):
+        userM[i] = 1 / userM[i]
+    fits = []
+    for i in range(0, len(trainerM)):
+        fits.append(userM[i] / trainerM[i])
+    plt.plot(userM, label='User')
+    plt.plot(trainerM, label='Training coach')
+    plt.plot(fits, label='Index of fit')
+    plt.legend(loc='upper left')
+    plt.show()
 
 def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):
     """

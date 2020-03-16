@@ -22,6 +22,8 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     :param user:
     :return: list of bounds of cycles (list of int)
     """
+    percentile = np.percentile(y,10)
+
     ytominimize = np.array([])
     # we need to add a huge value in the first position in order to make the first value a localMin (the left(inf) and the
     # right value are both greater
@@ -30,13 +32,13 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     # argrelextrema finds the local mins in a vector (ytominimize) separated by at least radious values
     localMins = argrelextrema(ytominimize, np.less, order=radius)[0]
     realMins = []
-    # meany is the value under that the mins found are considered good and the value is taken doing the mean of all the
-    # localMins found
-    meany = np.mean(y[localMins[1:]])
+
+    meanMins = np.mean(y[localMins])
+    threshold = meanMins + (percentile - min(y[localMins]))
     testx = np.array([])
     testy = np.array([])
     for i in localMins:
-        if y[i - 1] < meany + 25000:  # i-1 becuase I added an element in ytominimize
+        if y[i - 1] < threshold:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
             testy = np.append(testy, y[i - 1])
@@ -44,8 +46,8 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
     if plotChart:
         plt.scatter(x, y, color="red")
         plt.scatter(testx, testy, color="blue")
-        meany = [meany] * len(testx)
-        plt.plot(testx, meany, 'blue')
+        threshold = [threshold] * len(testx)
+        plt.plot(testx, threshold, 'blue')
         plt.title(title)
         plt.show()
     if (realMins[1] - realMins[0]) > slidingWindowsDimension * 3 and user is True:
@@ -118,7 +120,7 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findminClustering(10, x, y, 'Dtw', plotChart, slidingWindowsDimension, user)
+    return findminClustering(slidingWindowsDimension//2, x, y, 'Dtw', plotChart, slidingWindowsDimension, user)
 
 
 def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
@@ -153,7 +155,7 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(10, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
+    return findmin(slidingWindowsDimension//2, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
 
 def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
     """
@@ -185,7 +187,7 @@ def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, seq
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(10, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
+    return findmin(slidingWindowsDimension//2, x, y, 'Gram', plotChart, slidingWindowsDimension, user=False)
 
 def getMeanMeasures(keyPointsSequence, meanRange):
     """

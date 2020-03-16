@@ -40,7 +40,6 @@ def paramsSideStepsJacks():
     videoParams = {'slidingWindowDimension': 20,
                    'slidingWindowDimensionUser': 20,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
@@ -80,10 +79,9 @@ def paramsSquats():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 20,
-                   'slidingWindowDimensionUser': 30,
+    videoParams = {'slidingWindowDimension': 50,
+                   'slidingWindowDimensionUser': 50,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 2,
                    }
     params = [keyPointsWeights, videoParams]
@@ -124,10 +122,9 @@ def paramsArmClap():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 20,
-                   'slidingWindowDimensionUser': 20,
+    videoParams = {'slidingWindowDimension': 30,
+                   'slidingWindowDimensionUser': 30,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
@@ -170,7 +167,6 @@ def paramsDumbBellCurl():
     videoParams = {'slidingWindowDimension': 20,
                    'slidingWindowDimensionUser': 20,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
@@ -210,10 +206,9 @@ def paramsPushUps():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 20,
-                   'slidingWindowDimensionUser': 20,
+    videoParams = {'slidingWindowDimension': 50,
+                   'slidingWindowDimensionUser': 50,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
@@ -253,10 +248,9 @@ def paramsLunges():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 20,
-                   'slidingWindowDimensionUser': 20,
+    videoParams = {'slidingWindowDimension': 45,
+                   'slidingWindowDimensionUser': 45,
                    'meanRange': 50,
-                   'firstMin_TrainerCycle': 0,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]

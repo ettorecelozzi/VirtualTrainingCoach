@@ -48,20 +48,20 @@ def removeDuplicate(unifiedPaths):
     return unifiedSet
 
 
-def removeDuplicateAndGetStat(alignedLists, mins, keyPoints):
+def getStats(alignedList, mins, keyPoints):
     """
     From pose's alignedList the duplicates are removed to avoid that in the means and std deviation calculation, a value
     is considered more than one time. Once removed means and the std deviation are retrieved for each pose.
-    :param alignedLists: list. aligned poses
+    :param alignedList: list. aligned poses
     :param mins: list. bound of the cycles
     :param keyPoints: array
     :return: arrays: mean, stds
     """
     means = []
     stds = []
-    for poseToStat in alignedLists:
-        noDuplicateList = removeDuplicate(poseToStat)
-        mean, std = getStatistics(noDuplicateList, mins, keyPoints)
+    for poseToStat in alignedList:
+        # noDuplicateList = removeDuplicate(poseToStat)
+        mean, std = getStatistics(poseToStat, mins, keyPoints)
         means.append(mean)  # the list of the means, one for each pose, each long 25
         stds.append(std)  # the list of the stds deviations, one for each pose, each long 25
     return np.asarray(means), np.asarray(stds)
