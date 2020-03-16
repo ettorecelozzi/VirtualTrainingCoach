@@ -36,7 +36,6 @@ def serializeKeyPointsSequence(keyPointsSequence, weights=None):
             else:
                 framePoints.append(point[0])
                 framePoints.append(point[1])
-
             pointIndex += 1
         res.append(framePoints)
     res = np.array(res)

@@ -3,6 +3,7 @@ import numpy as np
 from DevelopmentScripts import Normalization as norm
 from DevelopmentScripts import PoseAlignment
 from DevelopmentScripts import Statistics as stats
+from DevelopmentScripts import Utility
 
 slidingWindowDim = 30
 videoname = 'arm-clap'
@@ -25,4 +26,4 @@ alignedListUser = PoseAlignment.align1frame1pose(normalizedKeyPointsUser, minsUs
 meansUser, stdsUser = stats.getStats(alignedListUser, minsUser,
                                                           normalizedKeyPointsUser)
 path = PoseAlignment.getDtwPath(meansTrainer, meansUser)
-
+Utility.plotIndexOfFit(path,stdsUser,stdsTrainer)
