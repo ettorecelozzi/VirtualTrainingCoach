@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib import collections  as mc
+from matplotlib import collections as mc
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 import os
@@ -61,15 +61,16 @@ def getCleanName(videoname, user=False):
     return cleanName, noErrorName
 
 
-def plotPoseFromKeypoints(keypoints, pose, ax):
+def plotPoseFromKeypoints(keypoints, ax, color=False):
     """
     Plot poses given keypoints
     :param keypoints: one frame, (25,2)
-    :param pose: int, number of the pose
     :param ax: axis where to plot
-    :return: name of the figure saved
+    :param color: decide to change or not the color
+    :return: plt object
     """
 
+    colors = ['blue', 'white', 'red'] if color is False else ['green', 'white', 'red']
     # coordinates of the points to tie
     lines = [(0, 15), (0, 16), (0, 17), (0, 18), (0, 1), (1, 8), (1, 2), (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (8, 9),
              (9, 10), (10, 11), (11, 24), (11, 22), (23, 22), (22, 24), (8, 12), (12, 13), (13, 14), (14, 19), (19, 20),
@@ -86,9 +87,9 @@ def plotPoseFromKeypoints(keypoints, pose, ax):
                    (keypoints[lines[i][1]][0], keypoints[lines[i][1]][1])]
         pointToMerge.append(segment)
 
-    lc = mc.LineCollection(pointToMerge, colors='blue', linewidths=2)
+    lc = mc.LineCollection(pointToMerge, colors=colors[0], linewidths=2)
     ax.add_collection(lc)
-    kp = mpatches.Patch(color='blue', label='Trainer')
+    kp = mpatches.Patch(color=colors[0], label='Trainer')
     x = []
     y = []
     label = []
@@ -99,37 +100,40 @@ def plotPoseFromKeypoints(keypoints, pose, ax):
         x.append(keypoints[i][0])
         y.append(keypoints[i][1])
 
-    plt.title('Pose ' + str(pose))
-    plt.scatter(x, y, color="white")
+    plt.scatter(x, y, color=colors[1])
     # plt.scatter(400, 300, color="black")  # values needed to avoid that the pose is stretched
     # plt.scatter(800, 500, color="black")
     count = 0
-    Kp_L = mpatches.Patch(color='red', label='Trainer KeyPts')
+    Kp_L = mpatches.Patch(color=colors[2], label='Trainer KeyPts')
     for i in range(len(x)):
         if i in separate:
             if count % 2 == 0:
-                plt.text(x[i] + 0.04, y[i] - 0.1, str(label[i]), color="red", fontsize=12)
+                plt.text(x[i] + 0.04, y[i] - 0.2, str(label[i]), color=colors[2], fontsize=12)
                 count += 1
             else:
-                plt.text(x[i] - 0.09, y[i] + 0.2, str(label[i]), color="red", fontsize=12)
+                plt.text(x[i] - 0.09, y[i] + 0.09, str(label[i]), color=colors[2], fontsize=12)
                 count += 1
         else:
-            plt.text(x[i], y[i] - 0.1, str(label[i]), color="red", fontsize=12)
+            plt.text(x[i], y[i] - 0.1, str(label[i]), color=colors[2], fontsize=12)
 
     # invert the y axis to plot the pose in the same position as the person that do the exercise
     plt.gca().invert_yaxis()
+    if color is True:
+        usr = mpatches.Patch(color=colors[0], label='User')
+        kp = mpatches.Patch(color="blue", label='Trainer')
+        plt.legend(handles=[kp, usr])
+        return plt
     plt.legend(handles=[Kp_L, kp])
     return plt
 
 
 def plotFromAlignedList(alignedList, mins, keypoints, videoname):
     """
-
-    :param alignedList:
-    :param mins:
-    :param keypoints:
-    :param videoname:
-    :return:
+    Given alignedList plot all the poses in a list
+    :param alignedList: list of aligned poses
+    :param mins: cycles bounds
+    :param keypoints: keypoints to plot (25,2)
+    :param videoname: string
     """
     plt.style.use('dark_background')
     # alignedList = [['0|0', '0|1', '0|2'], ['1|0', '1|1', '1|2']]  # to test
@@ -153,7 +157,77 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
                 row += 1
             else:
                 column += 1
-        plt.show()
+    plt.show()
+
+
+def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrainer, min, userMin=None,
+                      videonameUser=None, op=None, opWrapper=None):
+    """
+    Given the last path that compare the trainer exercise with the user and plot the poses.
+    :param path: aligned poses
+    :param wrongPoses: indexes of the poses wrong
+    :param keypoints: keypoints, (25,2)
+    :param keypointsUser: user keypoints, (25,2)
+    :param videonameTrainer: string
+    :param min: min
+    :param userMin: user min
+    :param videonameUser: string
+    :param op: Openpose tool
+    :param opWrapper: Openpose tool
+    """
+    plt.style.use('dark_background')
+    videonameUser = videonameTrainer if videonameUser is None else videonameUser
+    userMin = min if userMin is None else userMin
+    countPose = 0
+    for couple in range(len(path)):
+        trainerPose = path[couple][0]
+        userPose = path[couple][1]
+        trainerKeypoints = keypoints[trainerPose]  # frame keypoints for the trainerPose
+        userKeypoints = keypointsUser[userPose]
+
+        if countPose % 25 == 0:
+            mainFig = plt.figure(figsize=(18, 8))
+            mainFig.suptitle(videonameTrainer)
+            gs = mainFig.add_gridspec(1, 3)
+            if op is not None and opWrapper is not None:
+                img = plotKeyPointsImage(videonameTrainer, min + trainerPose, op, opWrapper)
+                subfig = mainFig.add_subplot(gs[0, 0])
+                subfig.set_title("Skeleton Pose " + str(trainerPose))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                plt.axis('off')
+                plt.imshow(img)
+
+                img1 = plotKeyPointsImage(videonameUser, userMin + userPose, op, opWrapper, user=True)
+                subfig1 = mainFig.add_subplot(gs[0, 1])
+                subfig1.set_title("Skeleton User Pose " + str(userPose))
+                img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+                plt.axis('off')
+                plt.imshow(img1)
+
+            else:
+                subfig = mainFig.add_subplot(gs[0, 0])
+                subfig.set_title("Skeleton Pose " + str(trainerPose))
+                plotPoseFromKeypoints(trainerKeypoints, subfig)
+
+                subfig1 = mainFig.add_subplot(gs[0, 1])
+                subfig1.set_title("Skeleton User Pose " + str(userPose))
+                plotPoseFromKeypoints(userKeypoints, subfig1)
+
+            subfig2 = mainFig.add_subplot(gs[0, 2])
+            subfig2.set_title("Poses overlay")
+            plotPoseFromKeypoints(trainerKeypoints, subfig2)
+            plotPoseFromKeypoints(userKeypoints, subfig2, color=True)
+            plt.gca().invert_yaxis()
+
+            if wrongPoses[couple] == -1:
+                plt.gcf().text(0.45, 0.04, 'Wrong for mean in std range checker', color="red", fontsize=15)
+            else:
+                plt.gcf().text(0.45, 0.04, 'Correct for mean in std range checker', color="white", fontsize=15)
+            plt.show()
+            plt.savefig('./Plots/TrainerVsUser/' + videonameTrainer + 'Trainer pose: ' + str(
+                min + trainerPose) + ',\nUser pose: ' + str(userMin + userPose))
+            plt.close()
+        countPose += 1
 
 def plotIndexOfFit(path, stdsUser, stdsTrainer):
     trainerM = []

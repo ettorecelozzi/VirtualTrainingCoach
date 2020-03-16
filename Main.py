@@ -13,6 +13,7 @@ def main():
     videoname = 'SideSteJacks'
     openposeT = False
     openposeU = False
+    openposePlot = False
 
     # params
     getPickle()
@@ -93,8 +94,6 @@ def main():
         warnings.filterwarnings("ignore", category=FutureWarning)
         alignedList = PoseAlignment.align1frame1pose(normalizedKeyPoints, mins, weights=None)
 
-    plotFromAlignedList(alignedList, mins, normalizedKeyPoints, cleanName)
-
     # Get Trainer Statistics
     # pass True at the end of the method to use statistics library to calculate the std dev
     trainerMeans, stds = stats.removeDuplicateAndGetStat(alignedList, mins, normalizedKeyPoints)
@@ -126,9 +125,19 @@ def main():
     # ********************************* COMPARE USER TRAINER EXERCISE *********************************
 
     # Compare the trainer and User statistics through the two checker
-    wrongPosesMeanSTDIndex = compareChecker(trainerMeans, userMeans, stds, path,
-                                            weights=weights, errorStd=error,
-                                            errorAllowed=10)
+    wrongPosesMeanSTDIndex, wrongPosesGram = compareChecker(trainerMeans, userMeans, stds, path,
+                                                            weights=weights, errorStd=error,
+                                                            errorAllowed=10)
+
+    if openposePlot is True:
+        from DevelopmentScripts.Openpose import opinit
+        op, opWrapper = opinit()
+        plotTrainerVsUser(path, wrongPosesMeanSTDIndex, trainerMeans, userMeans, cleanName, mins[0], userMins[0],
+                          videonameUser, op=op, opWrapper=opWrapper)
+        opWrapper.stop()
+    else:
+        plotTrainerVsUser(path, wrongPosesMeanSTDIndex, trainerMeans, userMeans, cleanName, mins[0], userMins[0],
+                          videonameUser)
 
 
 if __name__ == '__main__':
