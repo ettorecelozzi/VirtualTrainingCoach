@@ -47,11 +47,12 @@ def getCleanName(videoname, user=False):
     :return: string. closest exercise name
     """
     filesNames = listdir('./paramsPickle')
-    cleanName = difflib.get_close_matches(videoname, filesNames)[0]  # return always the closest match
+    filesNames = [f.lower() for f in filesNames]
+    cleanName = difflib.get_close_matches(videoname.lower(), filesNames)[0]  # return always the closest match
 
     videoNames = listdir('./Videos/Trainer') if user is False else listdir('./Videos/User')
-    videoNames = [v.split('.')[0] for v in videoNames]
-    noErrorName = difflib.get_close_matches(videoname, videoNames)[0]
+    videoNames = [v.split('.')[0].lower() for v in videoNames]
+    noErrorName = difflib.get_close_matches(videoname.lower(), videoNames)[0]
 
     return cleanName, noErrorName
 
@@ -223,7 +224,7 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
         countPose += 1
 
 
-def plotIndexOfFit(path, stdsUser, stdsTrainer):
+def plotIndexOfFit(path, stdsUser, stdsTrainer, firstCycle=False, title=None):
     trainerM = []
     userM = []
     for couple in path:
@@ -251,7 +252,10 @@ def plotIndexOfFit(path, stdsUser, stdsTrainer):
     plt.plot(trainerM, label='Training coach')
     plt.plot(fits, label='Index of fit')
     plt.legend(loc='upper left')
-    plt.show()
+    plt.title(title)
+    plt.savefig('./Plots/IndexOfFit/First cycle/' + title) if firstCycle is True else plt.savefig(
+        './Plots/IndexOfFit/Normal/' + title)
+    plt.clf()
 
 
 def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):

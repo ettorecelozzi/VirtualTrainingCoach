@@ -43,7 +43,7 @@ def paramsSideStepsJacks():
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
-    with open('paramsPickle/SideStepsJacks', 'wb') as outFile:
+    with open('paramsPickle/sidestepsjacks', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
@@ -86,7 +86,7 @@ def paramsSquats():
                    }
     params = [keyPointsWeights, videoParams]
 
-    with open('paramsPickle/Squats', 'wb') as outFile:
+    with open('paramsPickle/squats', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
@@ -128,7 +128,7 @@ def paramsArmClap():
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
-    with open('paramsPickle/ArmClap', 'wb') as outFile:
+    with open('paramsPickle/armclap', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
@@ -170,7 +170,7 @@ def paramsDumbBellCurl():
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
-    with open('paramsPickle/DumbBellCurl', 'wb') as outFile:
+    with open('paramsPickle/dumbbellcurl', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
@@ -212,7 +212,7 @@ def paramsPushUps():
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
-    with open('paramsPickle/PushUps', 'wb') as outFile:
+    with open('paramsPickle/pushups', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
@@ -248,13 +248,13 @@ def paramsLunges():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 45,
-                   'slidingWindowDimensionUser': 45,
+    videoParams = {'slidingWindowDimension': 50,
+                   'slidingWindowDimensionUser': 50,
                    'meanRange': 50,
                    'error': 3,
                    }
     params = [keyPointsWeights, videoParams]
-    with open('paramsPickle/Lunges', 'wb') as outFile:
+    with open('paramsPickle/lunges', 'wb') as outFile:
         pkl.dump(params, outFile)
 
 
