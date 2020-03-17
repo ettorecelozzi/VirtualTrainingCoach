@@ -1,6 +1,5 @@
-import fastdtw as dtw
-from DevelopmentScripts.Utility import serializeKeyPointsSequence
-import myDTW as mydtw
+from DevelopmentScripts import myDTW
+
 
 def getDtwPath(frameSequence1, frameSequence2, weights=None):
     """
@@ -10,9 +9,7 @@ def getDtwPath(frameSequence1, frameSequence2, weights=None):
     :param weights: weights of the exercise
     :return: the path that represent the sequences aligned
     """
-    # frameSequence1 = serializeKeyPointsSequence(frameSequence1, weights)
-    # frameSequence2 = serializeKeyPointsSequence(frameSequence2, weights)
-    distance, path = mydtw.dtw(frameSequence1, frameSequence2)
+    distance, path = myDTW.dtw(frameSequence1, frameSequence2)
     return path
 
 
@@ -80,6 +77,7 @@ def align1frame1pose_tmp(keyPoints, mins, weights=None):
         pose = list(dict.fromkeys(pose))
         poseMatrix.append(pose)
     return poseMatrix
+
 
 def align1frame1poseFirstCycle(keyPoints, mins, weights=None):
     """

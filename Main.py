@@ -26,7 +26,6 @@ def main():
     slidingWindowDimension = params[1]['slidingWindowDimension']
     slidingWindowDimensionUser = params[1]['slidingWindowDimensionUser']
     meanRange = params[1]['meanRange']  # represents the interval [-meanRange; +meanRange]
-    firstMin_TrainerCycle = params[1]['firstMin_TrainerCycle']  # first mins' index
     error = params[1]['error']
 
     print('\nExercise params: ', params[1])
@@ -53,7 +52,7 @@ def main():
     np.save('./KeyPoints/Trainer/' + cleanName + '_normalized.npy', normalizedKeyPoints)
 
     # Extract trainer cycles
-    mins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimension, keyPoints, plotChart=False)
+    mins = PoseAnalysis.extractCyclesByEuclidean(slidingWindowDimension, keyPoints, plotChart=False)
     print('\nIndexes of the Trainer cycles: ', mins)
 
     #
@@ -80,9 +79,9 @@ def main():
 
     # Define the template (trainerCycle) and extract User cycles
     trainerCycle = normalizedKeyPoints[
-                   mins[firstMin_TrainerCycle]: (mins[firstMin_TrainerCycle] + slidingWindowDimension)]
-    userMins = PoseAnalysis.extractCyclesByDtw(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=False,
-                                               sequence1=trainerCycle, user=True)
+                   mins[0]: (mins[0] + slidingWindowDimension)]
+    userMins = PoseAnalysis.extractCyclesByEuclidean(slidingWindowDimensionUser, normalizedUserKeyPoints, plotChart=False,
+                                               sequence1=trainerCycle)
     print('\nIndexes of the User cycles: ', userMins)
 
     print('\n************************************** X-Y KEYPOINTS STRATEGY **************************************')
@@ -96,7 +95,7 @@ def main():
 
     # Get Trainer Statistics
     # pass True at the end of the method to use statistics library to calculate the std dev
-    trainerMeans, stds = stats.removeDuplicateAndGetStat(alignedList, mins, normalizedKeyPoints)
+    trainerMeans, stds = stats.getStats(alignedList, mins, normalizedKeyPoints)
     np.save('./KeypointsStatistics/Trainer/' + cleanName + '_means.npy', trainerMeans)
     np.save('./KeypointsStatistics/Trainer/' + cleanName + '_stds.npy', stds)
 
@@ -109,7 +108,7 @@ def main():
         alignedUserList = PoseAlignment.align1frame1pose(normalizedUserKeyPoints, userMins, weights=None)
 
     # Get User statistics
-    userMeans, userStds = stats.removeDuplicateAndGetStat(alignedUserList, userMins,
+    userMeans, userStds = stats.getStats(alignedUserList, userMins,
                                                           normalizedUserKeyPoints)
     np.save('./KeypointsStatistics/User/' + videonameUser + '_means.npy', userMeans)
     np.save('./KeypointsStatistics/User/' + videonameUser + '_stds.npy', userStds)
@@ -136,7 +135,7 @@ def main():
                           videonameUser, op=op, opWrapper=opWrapper)
         opWrapper.stop()
     else:
-        plotTrainerVsUser(path, wrongPosesMeanSTDIndex, trainerMeans, userMeans, cleanName, mins[0], userMins[0],
+        plotTrainerVsUser(path, wrongPosesGram, trainerMeans, userMeans, cleanName, mins[0], userMins[0],
                           videonameUser)
 
 

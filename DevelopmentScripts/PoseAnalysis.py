@@ -1,28 +1,24 @@
-import fastdtw as dtw
 import numpy as np
 from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 from scipy import linalg as la
-from DevelopmentScripts.Utility import serializeKeyPointsSequence
 from sklearn.cluster import AgglomerativeClustering
+from DevelopmentScripts import myDTW
 
 
-def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
+def findmin(radius, x, y, title, plotChart):
     """
-    TODO: verify (not modified)
     Find the local minus values of a vector y using the radius to separate the mins by at least radius values and plot the
     chart
-    :param radius:
-    :param x:
-    :param y:
-    :param title:
-    :param plotChart:
-    :param slidingWindowsDimension:
-    :param user:
+    :param radius: radius to check for local minima
+    :param x: frames
+    :param y: distances
+    :param title: string
+    :param plotChart: boolean
     :return: list of bounds of cycles (list of int)
     """
-    percentile = np.percentile(y,10)
+    percentile = np.percentile(y, 10)
 
     ytominimize = np.array([])
     # we need to add a huge value in the first position in order to make the first value a localMin (the left(inf) and the
@@ -50,23 +46,17 @@ def findmin(radius, x, y, title, plotChart, slidingWindowsDimension, user):
         plt.plot(testx, threshold, 'blue')
         plt.title(title)
         plt.show()
-    if (realMins[1] - realMins[0]) > slidingWindowsDimension * 3 and user is True:
-        realMins.pop(0)
     return realMins
 
 
-def findminClustering(radius, x, y, title, plotChart, slidingWindowsDimension, user):
+def findminClustering(radius, x, y, title, plotChart):
     """
-    TODO: verify (not modified)
-    Find the local minus values of a vector y using the radius to separate the mins by at least radius values and plot the
-    chart
-    :param radius:
-    :param x:
-    :param y:
-    :param title:
-    :param plotChart:
-    :param slidingWindowsDimension:
-    :param user:
+    Find to local minimas through a hierarchical clustering algorithm
+    :param radius: radius to check for local minima
+    :param x: frames
+    :param y: distances
+    :param title: string
+    :param plotChart: boolean
     :return: list of bounds of cycles (list of int)
     """
     ytominimize = np.array([])
@@ -90,7 +80,7 @@ def findminClustering(radius, x, y, title, plotChart, slidingWindowsDimension, u
     return realMins
 
 
-def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None, user=False):
+def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
     """
     Return the values in terms of frames that corresponds to the start and the end of cycles using the dtw as a distance
     measure.
@@ -108,27 +98,25 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
     # take the first window
     if sequence1 is None:
         sequence1 = keyPoints[t:t + slidingWindowsDimension]
-    sequence1 = serializeKeyPointsSequence(sequence1)
 
     x = np.array([])
     y = np.array([])
     # slide the sliding window and perform the dtw distance
     for t in range(t, keyPoints.shape[0] - slidingWindowsDimension):
         sequence2 = keyPoints[t:t + slidingWindowsDimension]
-        sequence2 = serializeKeyPointsSequence(sequence2)
-        distance, path = dtw.fastdtw(sequence1, sequence2, dist=euclidean)
+        distance, path = myDTW.dtw(sequence1, sequence2)
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findminClustering(slidingWindowsDimension//2, x, y, 'Dtw', plotChart, slidingWindowsDimension, user)
+    return findminClustering(slidingWindowsDimension // 2, x, y, 'Dtw', plotChart)
 
 
 def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
     """
     Return the values in terms of frames that corresponds to the start and the end of cycles using the euclidean distance.
     The idea is to take a sliding window of a certain dimension (slidingWindowsDimension) that slides along the frames of
-    the video and check the distance with the first window (the initial part of the video with dimensions slidingWindowDimesnion),
-    then perform the euclidean and get, for each value of t (the shift value), the distance
+    the video and check the distance with the first window (the initial part of the video with dimensions
+    slidingWindowDimension), then perform the euclidean and get, for each value of t (the shift value), the distance
     :param slidingWindowsDimension: int
     :param keyPoints: array of keypoints
     :param plotChart: boolean to decide if plot the chart of the cycle extraction
@@ -155,7 +143,8 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(slidingWindowsDimension//2, x, y, 'Euclidean', plotChart, slidingWindowsDimension, user=False)
+    return findmin(slidingWindowsDimension // 2, x, y, 'Euclidean', plotChart)
+
 
 def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
     """
@@ -182,12 +171,13 @@ def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, seq
         distance = 0
         # perform the gram distance for each frame and sum everything
         for i in range(0, slidingWindowsDimension):
-            distance = distance + getGramDistance(sequence1[i],sequence2[i])
-        print("t: "+str(t)+" dist: "+str(distance))
+            distance = distance + getGramDistance(sequence1[i], sequence2[i])
+        print("t: " + str(t) + " dist: " + str(distance))
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(slidingWindowsDimension//2, x, y, 'Gram', plotChart, slidingWindowsDimension, user=False)
+    return findmin(slidingWindowsDimension // 2, x, y, 'Gram', plotChart)
+
 
 def getMeanMeasures(keyPointsSequence, meanRange):
     """
@@ -259,20 +249,6 @@ def getGramDistance(poseDescriptor1, poseDescriptor2):
     return distance
 
 
-def getDescriptor(pose, means):
-    """
-    ---QUESTO NON SO COSA FACCIA
-    :param Pose:
-    :param means:
-    :return:
-    """
-    poseDescriptor = np.empty(shape=[25, 2])
-    for i in range(len(means[pose])):
-        poseDescriptor[i][0] = means[pose][i][0]
-        poseDescriptor[i][1] = means[pose][i][1]
-    return poseDescriptor
-
-
 def checkByGramMatrix(path, trainerMeans, userMeans, distance_error):
     """
     Check validity of an exercise using the gram distance
@@ -283,15 +259,17 @@ def checkByGramMatrix(path, trainerMeans, userMeans, distance_error):
     :return: the list of the wrong poses (error greater than the allowed error)
     """
     posesWrong = []
+    posesWrongIndex = [0] * len(path)
     for couple in range(len(path)):
         trainerPose = path[couple][0]
         userPose = path[couple][1]
-        pose_descriptor_trainer = getDescriptor(trainerPose, trainerMeans)
-        pose_descriptor_user = getDescriptor(userPose, userMeans)
+        pose_descriptor_trainer = trainerMeans[trainerPose]
+        pose_descriptor_user = userMeans[userPose]
         distance = getGramDistance(pose_descriptor_trainer, pose_descriptor_user)
         if distance > distance_error:
             posesWrong.append([trainerPose, userPose])  # number of errors is equal to the length of the poseWrong list
-    return posesWrong
+            posesWrongIndex[couple] = -1
+    return posesWrong, posesWrongIndex
 
 
 def compareChecker(trainerMeans, userMeans, stds, path, weights, errorStd, errorAllowed=10):
@@ -307,7 +285,7 @@ def compareChecker(trainerMeans, userMeans, stds, path, weights, errorStd, error
     print('\nTotal Poses: ', len(path))
     print('\n')
 
-    wrongPoses = checkByGramMatrix(path, trainerMeans, userMeans, 10)
+    wrongPoses, wrongPosesIndex = checkByGramMatrix(path, trainerMeans, userMeans, 10)
     print('\nWrong poses by gram matrix checker')
     if len(wrongPoses) < (len(userMeans) // 2):
         print("\nYou have done a great work, errors:", len(wrongPoses))
@@ -316,4 +294,4 @@ def compareChecker(trainerMeans, userMeans, stds, path, weights, errorStd, error
     print('\nTotal Poses: ', len(path))
     print('\n')
 
-    return wrongPoses
+    return wrongPosesMinSTDIndex, wrongPosesIndex

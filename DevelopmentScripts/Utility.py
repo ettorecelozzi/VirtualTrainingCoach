@@ -21,10 +21,6 @@ def serializeKeyPointsSequence(keyPointsSequence, weights=None):
     :param weights: weights list associated to body joints
     :return: keypoints sequences serialized
     """
-
-    # return np.reshape(keyPointsSequence, (keyPointsSequence.shape[0],
-    #                                       keyPointsSequence.shape[1] * keyPointsSequence.shape[2]))
-
     res = []
     for keyPointsFrame in keyPointsSequence:
         framePoints = []
@@ -68,7 +64,6 @@ def plotPoseFromKeypoints(keypoints, ax, color=False):
     :param color: decide to change or not the color
     :return: plt object
     """
-
     colors = ['blue', 'white', 'red'] if color is False else ['green', 'white', 'red']
     # coordinates of the points to tie
     lines = [(0, 15), (0, 16), (0, 17), (0, 18), (0, 1), (1, 8), (1, 2), (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (8, 9),
@@ -135,12 +130,11 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
     :param videoname: string
     """
     plt.style.use('dark_background')
-    # alignedList = [['0|0', '0|1', '0|2'], ['1|0', '1|1', '1|2']]  # to test
     for list in alignedList:
         numOfFigures = len(list) - 1
         columns = 3
         rows = int(np.ceil(numOfFigures / 3))
-        #columns = int(np.ceil(numOfFigures / 3)) if int(np.ceil(numOfFigures / 3)) >= 2 else: 2
+        # columns = int(np.ceil(numOfFigures / 3)) if int(np.ceil(numOfFigures / 3)) >= 2 else: 2
         mainFig = plt.figure(figsize=(18, 8))
         mainFig.suptitle(videoname)
         gs = mainFig.add_gridspec(rows, columns)
@@ -223,15 +217,17 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
             else:
                 plt.gcf().text(0.45, 0.04, 'Correct for mean in std range checker', color="white", fontsize=15)
             plt.show()
-            plt.savefig('./Plots/TrainerVsUser/' + videonameTrainer + 'Trainer pose: ' + str(
-                min + trainerPose) + ',\nUser pose: ' + str(userMin + userPose))
+            plt.savefig('./Plots/TrainerVsUser/' + videonameTrainer + ' Trainer: ' + str(
+                min + trainerPose) + ', User: ' + str(userMin + userPose))
             plt.close()
         countPose += 1
+
 
 def plotIndexOfFit(path, stdsUser, stdsTrainer):
     trainerM = []
     userM = []
     for couple in path:
+        # trainerM.append(np.mean(stdsTrainer[couple[0]].flatten()))
         tmpt = []
         tmpu = []
         for sublist in stdsTrainer[couple[0]]:
@@ -256,6 +252,7 @@ def plotIndexOfFit(path, stdsUser, stdsTrainer):
     plt.plot(fits, label='Index of fit')
     plt.legend(loc='upper left')
     plt.show()
+
 
 def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):
     """
