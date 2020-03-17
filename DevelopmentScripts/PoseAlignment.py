@@ -77,3 +77,40 @@ def align1frame1pose(keyPoints, mins, weights=None):
         pose = list(dict.fromkeys(pose))
         poseMatrix.append(pose)
     return poseMatrix
+
+def align1frame1poseFirstCycle(keyPoints, mins, weights=None):
+    """
+    Given the local mins of the cycles, align the cycles of an exercise execution
+    :param keyPoints: numpy array of keypoints (#frames,25,2)
+    :param mins: frame value that defines the cycles
+    :param weights: weights of the joints
+    :return: matrix of the poses aligned
+    """
+    i = 0
+    paths = []
+    while i in range(0, len(mins) - 2):
+        # perform the dtw and get the path
+        frameSequence1 = keyPoints[mins[0]:mins[1]]
+        frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]]
+        path = getDtwPath(frameSequence1, frameSequence2, weights)
+
+        unifiedPath = []
+        tmp = [path[0]]
+        for j in range(1, len(path)):
+            if path[j - 1][0] == path[j][0]:
+                tmp.append(path[j])
+            else:
+                unifiedPath.append(tmp)
+                tmp = [path[j]]
+        unifiedPath.append(tmp)
+        paths.append(unifiedPath)
+        i += 1
+    poseMatrix = []
+    for i in range(0, len(paths[0])):
+        pose = []
+        for j in range(0, len(paths[0][i])):
+            pose += [str(paths[0][i][0][0]) + '|0']
+            pose += findNext(str(paths[0][i][j][1]) + '|1', paths, 1)
+        pose = list(dict.fromkeys(pose))
+        poseMatrix.append(pose)
+    return poseMatrix
