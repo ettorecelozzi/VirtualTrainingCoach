@@ -26,7 +26,7 @@ def findNext(value, paths, pathsIndex):
     i = 0
     j = 0
     tmp = []
-    #the while check if we should go on searching for element in the list
+    # the while check if we should go on searching for element in the list
     while paths[pathsIndex][i][j][0] <= int(value.split('|')[0]) and i < len(paths[pathsIndex]) - 1:
         alreadySeen = False
         for j in range(0, len(paths[pathsIndex][i])):
@@ -51,10 +51,11 @@ def align1frame1pose_tmp(keyPoints, mins, weights=None):
     """
     i = 0
     paths = []
-    while i in range(0, len(mins) - 2):
+    bound = len(mins) - 2 if len(mins) > 3 else len(mins) - 1
+    while i in range(0, bound):
         # perform the dtw and get the path
         frameSequence1 = keyPoints[mins[i]:mins[i + 1]]
-        frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]]
+        frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]] if len(mins) > 3 else keyPoints[mins[i + 1]:]
         path = getDtwPath(frameSequence1, frameSequence2, weights)
 
         unifiedPath = []
@@ -89,10 +90,11 @@ def align1frame1poseFirstCycle(keyPoints, mins, weights=None):
     """
     i = 0
     paths = []
-    while i in range(0, len(mins) - 2):
+    bound = len(mins) - 2 if len(mins) > 3 else len(mins) - 1
+    while i in range(0, bound):
         # perform the dtw and get the path
-        frameSequence1 = keyPoints[mins[0]:mins[1]]
-        frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]]
+        frameSequence1 = keyPoints[mins[i]:mins[i + 1]]
+        frameSequence2 = keyPoints[mins[i + 1]: mins[i + 2]] if len(mins) > 3 else keyPoints[mins[i + 1]:]
         path = getDtwPath(frameSequence1, frameSequence2, weights)
         unifiedPath = []
         tmp = [path[0]]
@@ -115,6 +117,7 @@ def align1frame1poseFirstCycle(keyPoints, mins, weights=None):
         poseMatrix.append(pose)
     return poseMatrix
 
+
 def findNextFirstCycle(value, paths, pathsIndex):
     """
     Recursive function to find all the frames that belongs to the same pose in different cycles.
@@ -126,7 +129,7 @@ def findNextFirstCycle(value, paths, pathsIndex):
     i = 0
     j = 0
     tmp = []
-    #the while check if we should go on searching for element in the list
+    # the while check if we should go on searching for element in the list
     while paths[pathsIndex][i][j][0] <= int(value.split('|')[0]) and i < len(paths[pathsIndex]) - 1:
         alreadySeen = False
         for j in range(0, len(paths[pathsIndex][i])):

@@ -18,7 +18,7 @@ def findmin(radius, x, y, title, plotChart):
     :param plotChart: boolean
     :return: list of bounds of cycles (list of int)
     """
-    percentile = np.percentile(y, 10)
+    percentile = np.percentile(y, 7)
 
     ytominimize = np.array([])
     # we need to add a huge value in the first position in order to make the first value a localMin (the left(inf) and the
@@ -30,20 +30,26 @@ def findmin(radius, x, y, title, plotChart):
     realMins = []
 
     meanMins = np.mean(y[localMins])
-    threshold = meanMins + (percentile - min(y[localMins]))
+    threshold = meanMins + (percentile)  # - min(y[localMins]))
+    mins = np.sort(np.asarray([y[i] for i in localMins]))
+    dist = [threshold - d for d in mins[:len(mins) - 2]]
+    meanDist = np.mean(dist)
     testx = np.array([])
     testy = np.array([])
     for i in localMins:
-        if y[i - 1] < threshold:  # i-1 becuase I added an element in ytominimize
+        if y[i - 1] < meanDist:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
             testy = np.append(testy, y[i - 1])
+    realMins = np.sort(realMins)
     # Plot the chart if plotChart is True
     if plotChart:
         plt.scatter(x, y, color="red")
         plt.scatter(testx, testy, color="blue")
-        threshold = [threshold] * len(testx)
-        plt.plot(testx, threshold, 'blue')
+        threshold = [threshold] * len(x)
+        meanDist = [meanDist] * len(x)
+        plt.plot(range(len(x)), threshold, 'blue')
+        plt.plot(range(len(x)), meanDist, 'green')
         plt.title(title)
         plt.show()
     return realMins
@@ -111,7 +117,7 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
     return findminClustering(slidingWindowsDimension // 2, x, y, 'Dtw', plotChart)
 
 
-def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):
+def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', plotChart=False, sequence1=None):
     """
     Return the values in terms of frames that corresponds to the start and the end of cycles using the euclidean distance.
     The idea is to take a sliding window of a certain dimension (slidingWindowsDimension) that slides along the frames of
@@ -143,7 +149,7 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, plotChart=False
         x = np.append(x, t)
         y = np.append(y, distance)
 
-    return findmin(slidingWindowsDimension // 2, x, y, 'Euclidean', plotChart)
+    return findmin(slidingWindowsDimension // 2, x, y, 'Euclidean - ' + videoname, plotChart)
 
 
 def extractCyclesByGram(slidingWindowsDimension, keyPoints, plotChart=False, sequence1=None):

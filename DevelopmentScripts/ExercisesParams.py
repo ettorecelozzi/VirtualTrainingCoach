@@ -164,8 +164,8 @@ def paramsDumbBellCurl():
     }
 
     # params
-    videoParams = {'slidingWindowDimension': 20,
-                   'slidingWindowDimensionUser': 20,
+    videoParams = {'slidingWindowDimension': 50,
+                   'slidingWindowDimensionUser': 50,
                    'meanRange': 50,
                    'error': 3,
                    }
