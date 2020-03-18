@@ -29,8 +29,8 @@ def findmin(radius, x, y, title, plotChart):
     localMins = argrelextrema(ytominimize, np.less, order=radius)[0]
     realMins = []
 
-    meanMins = np.mean(y[localMins])
-    threshold = meanMins + (percentile - min(y[localMins]))
+    meanMins = np.mean(y[localMins]) + (percentile - min(y[localMins]))
+    threshold = meanMins
     testx = np.array([])
     testy = np.array([])
     for i in localMins:

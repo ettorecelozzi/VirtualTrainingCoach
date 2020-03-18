@@ -1,5 +1,5 @@
 from DevelopmentScripts import myDTW
-
+import numpy as np
 
 def getDtwPath(frameSequence1, frameSequence2, weights=None):
     """
@@ -41,7 +41,7 @@ def findNext(value, paths, pathsIndex):
     return tmp
 
 
-def align1frame1pose_tmp(keyPoints, mins, weights=None):
+def align1frame1pose(keyPoints, mins, weights=None):
     """
     Given the local mins of the cycles, align the cycles of an exercise execution
     :param keyPoints: numpy array of keypoints (#frames,25,2)
@@ -139,3 +139,45 @@ def findNextFirstCycle(value, paths, pathsIndex):
         i += 1
         j = 0
     return tmp
+
+def alignDiscrete(keypointsReference, poses, mins, keypoints):
+    # poses = [0,6,12,25,36,42,52]
+    belongsArray = np.zeros(shape=keypoints.shape[0])
+
+    for min in range(len(mins)-1):
+        poseIndex = 0
+        for frame in range(mins[min],mins[min+1]):
+            if poseIndex < len(poses) - 1:
+                if dist(keypoints[frame],keypointsReference[poses[poseIndex]]) < dist(keypoints[frame],keypointsReference[poses[poseIndex + 1]]):
+                    belongsArray[frame] = poseIndex
+                else:
+                    if dist(keypoints[frame + 1],keypointsReference[poses[poseIndex]]) >= dist(keypoints[frame + 1],keypointsReference[poses[poseIndex + 1]]) and dist(keypoints[frame + 2],keypointsReference[poses[poseIndex]]) >= dist(keypoints[frame + 2],keypointsReference[poses[poseIndex + 1]]):
+                        poseIndex += 1
+                    belongsArray[frame] = poseIndex
+            else:
+                belongsArray[frame] = poseIndex
+    return belongsArray
+
+def deleteEqualPoses(keypoints):
+    '''
+    Delete the pose that are too similar (distance lower than a threshold)
+    :param keypoints: keypoints of all the poses
+    :return: the list of keypoints without the repetitive poses
+    '''
+    pivot = 0
+    newKeypoints = [] #append on list are better than append in numpy array
+    newKeypoints.append(keypoints[pivot])
+    threshold = 0.1
+    for pose in range(1,keypoints.shape[0]):
+        if dist(keypoints[pivot],keypoints[pose]) > threshold:
+            pivot = pose
+            newKeypoints.append(keypoints[pose])
+    return newKeypoints
+
+def dist(pose1, pose2):
+    d=0
+    for j in range(len(pose1)):
+        v = np.power(float(pose1[j][0]) - float(pose2[j][0]), 2) + np.power(
+            float(pose1[j][1]) - float(pose2[j][1]), 2)
+        d = d + np.sqrt(v)
+    return d

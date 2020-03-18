@@ -10,10 +10,11 @@ videoname = 'arm-clap'
 keyPoints = np.load('./KeyPoints/Trainer/' + videoname + '.npy')
 meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keyPoints, 50)
 normalizedKeyPointsTrainer = norm.normalize(meanTorso, meanHipX, meanHipY, keyPoints.copy())
+normalizedKeyPointsTrainer = PoseAlignment.deleteEqualPoses(normalizedKeyPointsTrainer)
 minsTrainer = PoseAnalysis.extractCyclesByEuclidean(slidingWindowDim, normalizedKeyPointsTrainer, plotChart=True)
 print(minsTrainer)
 
-# videoname = 'arm-clap'
+# videoname = 'double-lunges'
 keyPointsUser = np.load('./KeyPoints/User/' + videoname + '_1.npy')
 meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keyPointsUser, 50)
 normalizedKeyPointsUser = norm.normalize(meanTorso, meanHipX, meanHipY, keyPointsUser.copy())
