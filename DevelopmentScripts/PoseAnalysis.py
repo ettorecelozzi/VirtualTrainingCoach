@@ -117,7 +117,8 @@ def extractCyclesByDtw(slidingWindowsDimension, keyPoints, plotChart=False, sequ
     return findminClustering(slidingWindowsDimension // 2, x, y, 'Dtw', plotChart)
 
 
-def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', plotChart=False, sequence1=None):
+def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', weights=None, plotChart=False,
+                             sequence1=None):
     """
     Return the values in terms of frames that corresponds to the start and the end of cycles using the euclidean distance.
     The idea is to take a sliding window of a certain dimension (slidingWindowsDimension) that slides along the frames of
@@ -125,6 +126,8 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', p
     slidingWindowDimension), then perform the euclidean and get, for each value of t (the shift value), the distance
     :param slidingWindowsDimension: int
     :param keyPoints: array of keypoints
+    :param videoname: string
+    :param weights: list of weights for each joint
     :param plotChart: boolean to decide if plot the chart of the cycle extraction
     :param sequence1: array. Used to extract cycle of the User
     :return: bound of the cycles
@@ -143,9 +146,10 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', p
         # perform the euclidean distance for each point of each frame and sum everything
         for i in range(0, slidingWindowsDimension):
             for j in range(0, keyPoints.shape[1]):
-                v = np.power(float(sequence1[i][j][0]) - float(sequence2[i][j][0]), 2) + np.power(
-                    float(sequence1[i][j][1]) - float(sequence2[i][j][1]), 2)
-                distance = distance + np.sqrt(v)
+                if weights is not None and weights[j][1] != 0:
+                    v = np.power(float(sequence1[i][j][0]) - float(sequence2[i][j][0]), 2) + np.power(
+                        float(sequence1[i][j][1]) - float(sequence2[i][j][1]), 2)
+                    distance = distance + np.sqrt(v)
         x = np.append(x, t)
         y = np.append(y, distance)
 

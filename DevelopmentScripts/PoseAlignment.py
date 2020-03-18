@@ -51,6 +51,7 @@ def align1frame1pose_tmp(keyPoints, mins, weights=None):
     """
     i = 0
     paths = []
+    if len(mins) <= 2: raise Exception('Not enough cycles, try for more time')
     bound = len(mins) - 2 if len(mins) > 3 else len(mins) - 1
     while i in range(0, bound):
         # perform the dtw and get the path
@@ -90,6 +91,7 @@ def align1frame1poseFirstCycle(keyPoints, mins, weights=None):
     """
     i = 0
     paths = []
+    if len(mins) <= 2: raise Exception('Not enough cycles, try for more time')
     bound = len(mins) - 2 if len(mins) > 3 else len(mins) - 1
     while i in range(0, bound):
         # perform the dtw and get the path

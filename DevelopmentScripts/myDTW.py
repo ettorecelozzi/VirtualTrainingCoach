@@ -6,13 +6,13 @@ import numbers
 import numpy as np
 from collections import defaultdict
 
+
 def __difference(a, b):
     return abs(a - b)
 
 
 def __norm(p):
     return lambda a, b: np.linalg.norm(a - b, p)
-
 
 
 def __prep_inputs(x, y, dist):
@@ -78,18 +78,19 @@ def __dtw(x, y, window, dist, weights):
     D = defaultdict(lambda: (float('inf'),))
     D[0, 0] = (0, 0, 0)
     for i, j in window:
-        dt = __dist(x[i-1], y[j-1], weights)
-        D[i, j] = min((D[i-1, j][0]+dt, i-1, j), (D[i, j-1][0]+dt, i, j-1),
-                      (D[i-1, j-1][0]+dt, i-1, j-1), key=lambda a: a[0])
+        dt = __dist(x[i - 1], y[j - 1], weights)
+        D[i, j] = min((D[i - 1, j][0] + dt, i - 1, j), (D[i, j - 1][0] + dt, i, j - 1),
+                      (D[i - 1, j - 1][0] + dt, i - 1, j - 1), key=lambda a: a[0])
     path = []
     i, j = len_x, len_y
     while not (i == j == 0):
-        path.append((i-1, j-1))
+        path.append((i - 1, j - 1))
         i, j = D[i, j][1], D[i, j][2]
     path.reverse()
     return (D[len_x, len_y][0], path)
 
-def __dist(sequence1,sequence2,weights=None):
+
+def __dist(sequence1, sequence2, weights=None):
     distance = 0
     if weights is None:
         for i in range(0, len(sequence1)):
@@ -99,21 +100,22 @@ def __dist(sequence1,sequence2,weights=None):
         return distance
     else:
         for i in range(0, len(sequence1)):
-            v = np.power(float(sequence1[i][0]) * weights[i] - float(sequence2[i][0]) * weights[i], 2) + np.power(
-                float(sequence1[i][1]) * weights[i] - float(sequence2[i][1]) * weights[i], 2)
+            v = np.power(float(sequence1[i][0]) * weights[i][1] - float(sequence2[i][0]) * weights[i][1], 2) + np.power(
+                float(sequence1[i][1]) * weights[i][1] - float(sequence2[i][1]) * weights[i][1], 2)
             distance = distance + np.sqrt(v)
         return distance
 
+
 def __reduce_by_half(x):
-    return [(x[i] + x[1+i]) / 2 for i in range(0, len(x) - len(x) % 2, 2)]
+    return [(x[i] + x[1 + i]) / 2 for i in range(0, len(x) - len(x) % 2, 2)]
 
 
 def __expand_window(path, len_x, len_y, radius):
     path_ = set(path)
     for i, j in path:
         for a, b in ((i + a, j + b)
-                     for a in range(-radius, radius+1)
-                     for b in range(-radius, radius+1)):
+                     for a in range(-radius, radius + 1)
+                     for b in range(-radius, radius + 1)):
             path_.add((a, b))
 
     window_ = set()
