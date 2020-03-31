@@ -1,5 +1,6 @@
 from DevelopmentScripts import myDTW
 import numpy as np
+import matplotlib.pyplot as plt
 
 def getDtwPath(frameSequence1, frameSequence2, weights=None):
     """
@@ -163,7 +164,7 @@ def alignDiscrete(keypointsReference, poses, mins, keypoints):
                 belongsArray[frame] = poseIndex
     return belongsArray
 
-def deleteEqualPoses(keypoints):
+def deleteEqualPoses(keypoints,weights=None):
     '''
     Delete the pose that are too similar (distance lower than a threshold)
     :param keypoints: keypoints of all the poses
@@ -174,15 +175,18 @@ def deleteEqualPoses(keypoints):
     newKeypoints.append(keypoints[pivot])
     threshold = 0.1
     for pose in range(1,keypoints.shape[0]):
-        if dist(keypoints[pivot],keypoints[pose]) > threshold:
+        # if you use weights then you should probabily lower the thereshold because less points mean lower distance
+        if dist(keypoints[pivot],keypoints[pose],weights) > threshold:
             pivot = pose
             newKeypoints.append(keypoints[pose])
+    newKeypoints = np.asarray(newKeypoints)
     return newKeypoints
 
-def dist(pose1, pose2):
+def dist(pose1, pose2,weights=None):
     d=0
     for j in range(len(pose1)):
-        v = np.power(float(pose1[j][0]) - float(pose2[j][0]), 2) + np.power(
-            float(pose1[j][1]) - float(pose2[j][1]), 2)
-        d = d + np.sqrt(v)
+        if weights is None or (weights is not None and weights[j][1] != 0):
+            v = np.power(float(pose1[j][0]) - float(pose2[j][0]), 2) + np.power(
+                float(pose1[j][1]) - float(pose2[j][1]), 2)
+            d = d + np.sqrt(v)
     return d

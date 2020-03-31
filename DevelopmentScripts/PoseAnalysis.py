@@ -37,7 +37,7 @@ def findmin(radius, x, y, title, plotChart):
     testx = np.array([])
     testy = np.array([])
     for i in localMins:
-        if y[i - 1] < meanDist:  # i-1 becuase I added an element in ytominimize
+        if y[i - 1] < meanDist+100:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
             testy = np.append(testy, y[i - 1])
@@ -146,7 +146,7 @@ def extractCyclesByEuclidean(slidingWindowsDimension, keyPoints, videoname='', w
         # perform the euclidean distance for each point of each frame and sum everything
         for i in range(0, slidingWindowsDimension):
             for j in range(0, keyPoints.shape[1]):
-                if weights is not None and weights[j][1] != 0:
+                if weights is None or (weights is not None and weights[j][1] != 0):
                     v = np.power(float(sequence1[i][j][0]) - float(sequence2[i][j][0]), 2) + np.power(
                         float(sequence1[i][j][1]) - float(sequence2[i][j][1]), 2)
                     distance = distance + np.sqrt(v)

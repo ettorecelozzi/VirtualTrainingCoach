@@ -253,9 +253,9 @@ def plotIndexOfFit(path, stdsUser, stdsTrainer, firstCycle=False, title=None):
     plt.plot(fits, label='Index of fit')
     plt.legend(loc='upper left')
     plt.title(title)
-    plt.savefig('./Plots/IndexOfFit/First cycle/' + title) if firstCycle is True else plt.savefig(
-        './Plots/IndexOfFit/Normal/' + title)
-    plt.clf()
+    # plt.savefig('./Plots/IndexOfFit/First cycle/' + title) if firstCycle is True else plt.savefig(
+    #     './Plots/IndexOfFit/Normal/' + title)
+    plt.show()
 
 
 def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):
