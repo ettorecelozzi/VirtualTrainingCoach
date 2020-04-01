@@ -37,7 +37,7 @@ def findmin(radius, x, y, title, plotChart):
     testx = np.array([])
     testy = np.array([])
     for i in localMins:
-        if y[i - 1] < meanDist+100:  # i-1 becuase I added an element in ytominimize
+        if y[i - 1] < meanDist:  # i-1 becuase I added an element in ytominimize
             realMins.append(i - 1)
             testx = np.append(testx, i - 1)
             testy = np.append(testy, y[i - 1])
