@@ -6,6 +6,7 @@ from DevelopmentScripts import Statistics as stats
 from DevelopmentScripts import Utility
 import pickle as pkl
 from DevelopmentScripts.ExercisesParams import getPickle
+from DevelopmentScripts.PoseAnalysis import *
 
 getPickle()
 videoname = 'arm-clap'
@@ -15,23 +16,24 @@ weights = params[0]
 slidingWindowDim = params[1]['slidingWindowDimension']
 
 keyPoints = np.load('./KeyPoints/Trainer/' + videoname + '.npy')
+getPointsAngles(keyPoints, weights)
 meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keyPoints, 50)
 normalizedKeyPointsTrainer = norm.normalize(meanTorso, meanHipX, meanHipY, keyPoints.copy())
-print("before: " + str(len(normalizedKeyPointsTrainer)))
-normalizedKeyPointsTrainer = PoseAlignment.deleteEqualPoses(normalizedKeyPointsTrainer)
-print("after: " + str(len(normalizedKeyPointsTrainer)))
+# print("before: " + str(len(normalizedKeyPointsTrainer)))
+# normalizedKeyPointsTrainer = PoseAlignment.deleteEqualPoses(normalizedKeyPointsTrainer)
+# print("after: " + str(len(normalizedKeyPointsTrainer)))
 minsTrainer = PoseAnalysis.extractCyclesByEuclidean(slidingWindowDim, normalizedKeyPointsTrainer, weights=weights,
-                                                    plotChart=True)
+                                                    plotChart=False)
 print(minsTrainer)
 
 # videoname = 'double-lunges'
 keyPointsUser = np.load('./KeyPoints/User/' + videoname + '_1.npy')
 normalizedKeyPointsUser = norm.normalize(meanTorso, meanHipX, meanHipY, keyPointsUser.copy())
-print("before: " + str(len(normalizedKeyPointsUser)))
-normalizedKeyPointsUser = PoseAlignment.deleteEqualPoses(normalizedKeyPointsUser)
-print("after: " + str(len(normalizedKeyPointsUser)))
+# print("before: " + str(len(normalizedKeyPointsUser)))
+# normalizedKeyPointsUser = PoseAlignment.deleteEqualPoses(normalizedKeyPointsUser)
+# print("after: " + str(len(normalizedKeyPointsUser)))
 minsUser = PoseAnalysis.extractCyclesByEuclidean(slidingWindowDim, normalizedKeyPointsUser, weights=weights,
-                                                 plotChart=True,
+                                                 plotChart=False,
                                                  sequence1=normalizedKeyPointsTrainer[0:slidingWindowDim])
 print(minsUser)
 
@@ -40,4 +42,7 @@ meansTrainer, stdsTrainer = stats.getStats(alignedList, minsTrainer, normalizedK
 alignedListUser = PoseAlignment.align1frame1pose(normalizedKeyPointsUser, minsUser, weights=None)
 meansUser, stdsUser = stats.getStats(alignedListUser, minsUser, normalizedKeyPointsUser)
 path = PoseAlignment.getDtwPath(meansTrainer, meansUser)
-Utility.plotIndexOfFit(path, stdsUser, stdsTrainer)
+# Utility.plotIndexOfFit(path, stdsUser, stdsTrainer)
+
+compareChecker(trainerCycle=meansTrainer, userCycle=meansUser, stdsTrainer=stdsTrainer, path=path, weights=weights,
+               errorStd=0.3, errorAngles=15)

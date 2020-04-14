@@ -216,7 +216,17 @@ def getMeanMeasures(keyPointsSequence, meanRange):
     return np.mean(torsoMeasures), np.mean(midhipxMeasures), np.mean(midhipyMeasures)
 
 
-def checkExerciseByMeanInStdRange(trainerMeans, stds, userMeans, weights, path, errorStd):
+def checkExerciseByMeanInStdRange(trainerCycle, stdTrainer, userCycle, weights, path, errorStd):
+    """
+    Function that checks how the user perform the exercise comparing the standard deviation range of the keypoints
+    :param trainerCycle: trainer poses
+    :param stdTrainer: trainer std dev poses
+    :param userCycle: user poses
+    :param weights: weights of the joints, pass None to not use weights
+    :param path: aligned path returned by the DTW
+    :param errorStd: the error allowed to classify the exercise as correct
+    :return: 2 arrays, the wrong poses and the indexes of the wrong couple
+    """
     wrongPoses = []
     wrongPosesIndex = [0] * len(path)
     for couple in range(len(path)):
@@ -224,22 +234,22 @@ def checkExerciseByMeanInStdRange(trainerMeans, stds, userMeans, weights, path, 
         userPose = path[couple][1]
         error = 0
         keypointsWrong = []
-        for keypoint in range(0, len(trainerMeans[trainerPose])):
-            # define for each point the range of standard deviation of the trainer mean using a factor 3 as permitted
-            # error coefficent and using the weights
-            stdRangeXp = (trainerMeans[trainerPose][keypoint][0] + stds[trainerPose][keypoint][0])
-            stdRangeXm = (trainerMeans[trainerPose][keypoint][0] - stds[trainerPose][keypoint][0])
-            stdRangeYp = (trainerMeans[trainerPose][keypoint][1] + stds[trainerPose][keypoint][1])
-            stdRangeYm = (trainerMeans[trainerPose][keypoint][1] - stds[trainerPose][keypoint][1])
-            userMeanY = userMeans[userPose][keypoint][1]
-            userMeanX = userMeans[userPose][keypoint][0]
+        for keypoint in range(0, len(trainerCycle[trainerPose])):
+            if weights[keypoint][1] == 0: continue
+
+            stdRangeXp = trainerCycle[trainerPose][keypoint][0] + stdTrainer[trainerPose][keypoint][0] + errorStd
+            stdRangeXm = trainerCycle[trainerPose][keypoint][0] - stdTrainer[trainerPose][keypoint][0] - errorStd
+            stdRangeYp = trainerCycle[trainerPose][keypoint][1] + stdTrainer[trainerPose][keypoint][1] + errorStd
+            stdRangeYm = trainerCycle[trainerPose][keypoint][1] - stdTrainer[trainerPose][keypoint][1] - errorStd
+            userMeanY = userCycle[userPose][keypoint][1]
+            userMeanX = userCycle[userPose][keypoint][0]
 
             # control condition
             if (stdRangeXm > userMeanX or stdRangeXp < userMeanX) or (stdRangeYm > userMeanY or stdRangeYp < userMeanY):
                 error += weights[keypoint][1]
                 keypointsWrong.append(keypoint)
-        if error > errorStd:
-            wrongPoses.append([trainerPose, keypointsWrong, 'Error weight: ' + str(round(error, 3))])
+        if error > 0:
+            wrongPoses.append([keypointsWrong, 'Error weight: ' + str(round(error, 3))])
             wrongPosesIndex[couple] = -1
     return wrongPoses, wrongPosesIndex
 
@@ -282,26 +292,105 @@ def checkByGramMatrix(path, trainerMeans, userMeans, distance_error):
     return posesWrong, posesWrongIndex
 
 
-def compareChecker(trainerMeans, userMeans, stds, path, weights, errorStd, errorAllowed=10):
-    wrongPosesMeaninStd, wrongPosesMinSTDIndex = checkExerciseByMeanInStdRange(trainerMeans, stds,
-                                                                               userMeans,
-                                                                               weights, path, errorStd)
-    # print('\nWrong poses by user mean in std deviation trainer range\n\n', wrongPosesMeaninStd)
-    print('\nWrong poses by user mean in std deviation trainer range')
-    if len(wrongPosesMeaninStd) < (len(userMeans) // 2):
-        print("\nYou have done a great work, errors:", len(wrongPosesMeaninStd))
-    else:
-        print("\nYou sucks, errors:", len(wrongPosesMeaninStd))
-    print('\nTotal Poses: ', len(path))
-    print('\n')
+def getPointsAngles(means, weights):
+    """
+    For each frame retrieve the angle between the joints specified in the 'jointsNumber' list.
+    To get cosine of the angle the dot product formula is used, then the arccos returns the angle
+    :param means: array of the mean poses
+    :param weights: weights of the joints
+    :return: array of the joints angles
+    """
+    jointsNumber = {'leftUpperBody': [[8, 1], [1, 2], [2, 3], [3, 4]],
+                    'rightUpperBody': [[8, 1], [1, 5], [5, 6], [6, 7]],
+                    'leftLowerBody': [[1, 8], [8, 9], [9, 10], [10, 11], [11, 23]],
+                    'rightLowerBody': [[1, 8], [8, 12], [12, 13], [13, 14], [14, 20]], }
 
-    wrongPoses, wrongPosesIndex = checkByGramMatrix(path, trainerMeans, userMeans, 10)
-    print('\nWrong poses by gram matrix checker')
-    if len(wrongPoses) < (len(userMeans) // 2):
-        print("\nYou have done a great work, errors:", len(wrongPoses))
-    else:
-        print("\nYou sucks, errors:", len(wrongPoses))
-    print('\nTotal Poses: ', len(path))
-    print('\n')
+    angles = []
+    for pose in means:
+        frameAngles = []
+        for joints in jointsNumber.values():  # number of keypoints reduced
+            for couple in range(len(joints) - 1):
+                jointIndex = joints[couple]  # couple of joints that forms the vector
+                couple += 1
+                jointIndexN = joints[couple]  # next couple of joints that forms the vector
+                if weights[jointIndex[1]][1] == 0: continue
+                bodyVector1 = np.subtract(np.array([float(pose[jointIndex[1]][0]), float(pose[jointIndex[1]][1])]),
+                                          np.array([float(pose[jointIndex[0]][0]), float(pose[jointIndex[0]][1])]))
+                bodyVector2 = np.subtract(np.array([float(pose[jointIndexN[0]][0]), float(pose[jointIndexN[0]][1])]),
+                                          np.array([float(pose[jointIndexN[1]][0]), float(pose[jointIndexN[1]][1])]))
+                # vector normalization
+                bodyVector1 = np.divide(bodyVector1, np.linalg.norm(bodyVector1))
+                bodyVector2 = np.divide(bodyVector2, np.linalg.norm(bodyVector2))
+                # "inverse" dot product
+                angle = np.degrees(np.arccos(np.clip((np.dot(bodyVector1, bodyVector2)), -1.0, 1.0)))
+                # string to identify the calculated angle
+                strAngle = str(jointIndex[1]) + "-" + str(jointIndex[0]) + "|" + \
+                           str(jointIndexN[0]) + "-" + str(jointIndexN[1])
+                # list of: joint linked to neck, angle formed with torso, each long 25
+                frameAngles.append([strAngle, angle])
+        angles.append(frameAngles)
+    return angles
 
-    return wrongPosesMinSTDIndex, wrongPosesIndex
+
+def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
+    """
+    Function that checks how the user perform the exercise comparing the trainer angles between the joints with the user
+    ones.
+    :param trainerCycle: trainer poses
+    :param userCycle: user poses
+    :param weights: weights of the joints, pass None to not use weights
+    :param path: aligned path returned by the DTW
+    :param errorAngles: the error allowed to classify the exercise as correct
+    :return: 2 arrays, the wrong poses and the indexes of the wrong couple
+    """
+    trainerAngles = getPointsAngles(trainerCycle, weights)
+    userAngles = getPointsAngles(userCycle, weights)
+    wrongPoses = []
+    wrongPosesIndex = [0] * len(path)
+    for couple in range(len(path)):
+        trainerPose = path[couple][0]
+        userPose = path[couple][1]
+        error = 0
+        keypointsWrong = []
+        for keypoint in range(len(trainerAngles[trainerPose])):
+            # note that at this point the keypoint 0 is the first angle calculated not the keypoint number 0
+            trainerAngle = trainerAngles[trainerPose][keypoint][1]
+            userAngle = userAngles[userPose][keypoint][1]
+            if userAngle > trainerAngle + errorAngles or userAngle < trainerAngle - errorAngles:
+                error += weights[int(trainerAngles[trainerPose][keypoint][0][0])][1]
+                keypointsWrong.append(trainerAngles[trainerPose][keypoint][0])
+        if error > 0:
+            wrongPoses.append([keypointsWrong, 'Error weight: ' + str(round(error, 3))])
+            wrongPosesIndex[couple] = - 1
+    return wrongPoses, wrongPosesIndex
+
+
+def compareChecker(trainerCycle, userCycle, stdsTrainer, path, weights, errorStd, errorAngles):
+    """
+    Find out the wrong poses performed by the user
+    :param trainerCycle: trainer poses
+    :param userCycle: user poses
+    :param stdsTrainer: trainer standard deviation
+    :param path: aligned path returned by the DTW
+    :param weights: weights of the joints, pass None to not use weights
+    :param errorStd: the error allowed to classify the exercise as correct for the std checker
+    :param errorAngles: the error allowed to classify the exercise as correct for the angles checker
+    """
+    wrongPoses, wrongPosesIndex = checkExerciseByMeanInStdRange(trainerCycle=trainerCycle, stdTrainer=stdsTrainer,
+                                                                userCycle=userCycle, path=path, weights=weights,
+                                                                errorStd=errorStd)
+    print('\nWrong poses STD:')
+    print(wrongPoses)
+    print('Couple of poses wrong STD:')
+    notZero = np.nonzero(wrongPosesIndex)[0]
+    for i in notZero: print(str(path[i]), end=', ')
+    print('\nNumber of errors STD: ' + str(len(notZero)) + '/' + str(len(path)))
+
+    wrongPosesAngles, wrongPosesIndexAngles = checkByJointsAngles(trainerCycle=trainerCycle, userCycle=userCycle,
+                                                                  path=path, weights=weights, errorAngles=errorAngles)
+    print('\nWrong joints ANGLES:')
+    print(wrongPosesAngles)
+    print('Couple of poses wrong ANGLES:')
+    notZeroAngles = np.nonzero(wrongPosesIndexAngles)[0]
+    for i in notZeroAngles: print(str(path[i]), end=', ')
+    print('\nNumber of errors ANGLES: ' + str(len(notZeroAngles)) + '/' + str(len(path)))
