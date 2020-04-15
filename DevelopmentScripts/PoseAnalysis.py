@@ -365,7 +365,7 @@ def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
     return wrongPoses, wrongPosesIndex
 
 
-def compareChecker(trainerCycle, userCycle, stdsTrainer, path, weights, errorStd, errorAngles):
+def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     """
     Find out the wrong poses performed by the user
     :param trainerCycle: trainer poses
@@ -376,15 +376,15 @@ def compareChecker(trainerCycle, userCycle, stdsTrainer, path, weights, errorStd
     :param errorStd: the error allowed to classify the exercise as correct for the std checker
     :param errorAngles: the error allowed to classify the exercise as correct for the angles checker
     """
-    wrongPoses, wrongPosesIndex = checkExerciseByMeanInStdRange(trainerCycle=trainerCycle, stdTrainer=stdsTrainer,
-                                                                userCycle=userCycle, path=path, weights=weights,
-                                                                errorStd=errorStd)
-    print('\nWrong poses STD:')
-    print(wrongPoses)
-    print('Couple of poses wrong STD:')
-    notZero = np.nonzero(wrongPosesIndex)[0]
-    for i in notZero: print(str(path[i]), end=', ')
-    print('\nNumber of errors STD: ' + str(len(notZero)) + '/' + str(len(path)))
+    # wrongPoses, wrongPosesIndex = checkExerciseByMeanInStdRange(trainerCycle=trainerCycle, stdTrainer=stdsTrainer,
+    #                                                             userCycle=userCycle, path=path, weights=weights,
+    #                                                             errorStd=errorStd)
+    # print('\nWrong poses STD:')
+    # print(wrongPoses)
+    # print('Couple of poses wrong STD:')
+    # notZero = np.nonzero(wrongPosesIndex)[0]
+    # for i in notZero: print(str(path[i]), end=', ')
+    # print('\nNumber of errors STD: ' + str(len(notZero)) + '/' + str(len(path)))
 
     wrongPosesAngles, wrongPosesIndexAngles = checkByJointsAngles(trainerCycle=trainerCycle, userCycle=userCycle,
                                                                   path=path, weights=weights, errorAngles=errorAngles)
