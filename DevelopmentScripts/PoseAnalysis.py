@@ -303,7 +303,7 @@ def getPointsAngles(means, weights):
     jointsNumber = {'leftUpperBody': [[8, 1], [1, 2], [2, 3], [3, 4]],
                     'rightUpperBody': [[8, 1], [1, 5], [5, 6], [6, 7]],
                     'leftLowerBody': [[1, 8], [8, 9], [9, 10], [10, 11], [11, 23]],
-                    'rightLowerBody': [[1, 8], [8, 12], [12, 13], [13, 14], [14, 20]], }
+                    'rightLowerBody': [[1, 8], [8, 12], [12, 13], [13, 14], [14, 20]]}
 
     angles = []
     for pose in means:
@@ -324,7 +324,7 @@ def getPointsAngles(means, weights):
                 # "inverse" dot product
                 angle = np.degrees(np.arccos(np.clip((np.dot(bodyVector1, bodyVector2)), -1.0, 1.0)))
                 # string to identify the calculated angle
-                strAngle = str(jointIndex[1]) + "-" + str(jointIndex[0]) + "|" + \
+                strAngle = str(jointIndex[0]) + "-" + str(jointIndex[1]) + "|" + \
                            str(jointIndexN[0]) + "-" + str(jointIndexN[1])
                 # list of: joint linked to neck, angle formed with torso, each long 25
                 frameAngles.append([strAngle, angle])
@@ -394,3 +394,4 @@ def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     notZeroAngles = np.nonzero(wrongPosesIndexAngles)[0]
     for i in notZeroAngles: print(str(path[i]), end=', ')
     print('\nNumber of errors ANGLES: ' + str(len(notZeroAngles)) + '/' + str(len(path)))
+    return wrongPosesIndexAngles

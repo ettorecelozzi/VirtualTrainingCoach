@@ -45,5 +45,7 @@ meansUser, stdsUser = stats.getStats(alignedListUser, minsUser, normalizedKeyPoi
 path = PoseAlignment.getDtwPath(cycleTrainer, meansUser)
 # Utility.plotIndexOfFit(path, stdsUser, stdsTrainer)
 
-compareChecker(trainerCycle=cycleTrainer, userCycle=meansUser, path=path, weights=weights,
-            errorAngles=15)
+wrongPosesAngles = compareChecker(trainerCycle=cycleTrainer, userCycle=meansUser, path=path, weights=weights,
+                                  errorAngles=15)
+Utility.plotTrainerVsUser(path=path, wrongPoses=wrongPosesAngles, keypoints=cycleTrainer, keypointsUser=meansUser,
+                          videonameTrainer=cleanName)
