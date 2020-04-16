@@ -5,6 +5,7 @@ from scipy.signal import argrelextrema
 from scipy import linalg as la
 from sklearn.cluster import AgglomerativeClustering
 from DevelopmentScripts import myDTW
+from DevelopmentScripts.Utility import plotTrainerVsBestWorst
 
 
 def findmin(radius, x, y, title, plotChart):
@@ -212,7 +213,7 @@ def getMeanMeasures(keyPointsSequence, meanRange):
         midhipyMeasures = np.append(midhipyMeasures, float(keyPointsFrame[8][1]))
         # append the distance from neck to midhip
         torsoMeasures = np.append(torsoMeasures, euclidean(neck, midhip))
-    # return the means
+    # return the poses
     return np.mean(torsoMeasures), np.mean(midhipxMeasures), np.mean(midhipyMeasures)
 
 
@@ -292,19 +293,19 @@ def checkByGramMatrix(path, trainerMeans, userMeans, distance_error):
     return posesWrong, posesWrongIndex
 
 
-def getPointsAngles(means, weights):
+def getPointsAngles(poses, weights):
     """
-    For each frame retrieve the angle between the joints specified in the 'jointsNumber' list.
-    To get cosine of the angle the dot product formula is used, then the arccos returns the angle
-    :param means: array of the mean poses
+    Compute the angles for each pose in a sequence of frames
+    :param poses: array of the mean poses
     :param weights: weights of the joints
     :return: array of the joints angles
     """
     angles = []
-    for pose in means:
-        frameAngles = getPoseAngle(pose,weights)
+    for pose in poses:
+        frameAngles = getPoseAngle(pose, weights)
         angles.append(frameAngles)
     return angles
+
 
 def getPoseAngle(pose, weights):
     """
@@ -336,11 +337,12 @@ def getPoseAngle(pose, weights):
             # "inverse" dot product
             angle = np.degrees(np.arccos(np.clip((np.dot(bodyVector1, bodyVector2)), -1.0, 1.0)))
             # string to identify the calculated angle
-            strAngle = str(jointIndex[1]) + "-" + str(jointIndex[0]) + "|" + \
+            strAngle = str(jointIndex[0]) + "-" + str(jointIndex[1]) + "|" + \
                        str(jointIndexN[0]) + "-" + str(jointIndexN[1])
             # list of: joint linked to neck, angle formed with torso, each long 25
             frameAngles.append([strAngle, angle])
     return frameAngles
+
 
 def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
     """
@@ -374,8 +376,9 @@ def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
             wrongPosesIndex[couple] = - 1
     return wrongPoses, wrongPosesIndex
 
-def getAngleDistance(trainerPose,userPose,errorAngles,weights):
-    trainerAngles = getPoseAngle(trainerPose,weights)
+
+def getAngleDistance(trainerPose, userPose, errorAngles, weights):
+    trainerAngles = getPoseAngle(trainerPose, weights)
     userAngles = getPoseAngle(userPose, weights)
     error = 0
     keypointsWrong = []
@@ -384,8 +387,9 @@ def getAngleDistance(trainerPose,userPose,errorAngles,weights):
         trainerAngle = trainerAngles[keypoint][1]
         userAngle = userAngles[keypoint][1]
         if userAngle > trainerAngle + errorAngles or userAngle < trainerAngle - errorAngles:
-            error += weights[int(trainerAngles[keypoint][0][0])][1] * abs(trainerAngle-userAngle)
+            error += weights[int(trainerAngles[keypoint][0][0])][1] * abs(trainerAngle - userAngle)
     return error
+
 
 def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     """
@@ -398,16 +402,6 @@ def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     :param errorStd: the error allowed to classify the exercise as correct for the std checker
     :param errorAngles: the error allowed to classify the exercise as correct for the angles checker
     """
-    # wrongPoses, wrongPosesIndex = checkExerciseByMeanInStdRange(trainerCycle=trainerCycle, stdTrainer=stdsTrainer,
-    #                                                             userCycle=userCycle, path=path, weights=weights,
-    #                                                             errorStd=errorStd)
-    # print('\nWrong poses STD:')
-    # print(wrongPoses)
-    # print('Couple of poses wrong STD:')
-    # notZero = np.nonzero(wrongPosesIndex)[0]
-    # for i in notZero: print(str(path[i]), end=', ')
-    # print('\nNumber of errors STD: ' + str(len(notZero)) + '/' + str(len(path)))
-
     wrongPosesAngles, wrongPosesIndexAngles = checkByJointsAngles(trainerCycle=trainerCycle, userCycle=userCycle,
                                                                   path=path, weights=weights, errorAngles=errorAngles)
     print('\nWrong joints ANGLES:')
@@ -418,5 +412,42 @@ def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     for i in notZeroAngles:
         wrong.append(path[i])
         print(str(path[i]), end=', ')
-    print('\nNumber of errors ANGLES: ' + str(len(notZeroAngles)) + '/' + str(len(path)))
-    return wrong
+    print('\nNumber of errors ANGLES: ' + str(len(notZeroAngles)) + '/' + str(len(path)) + '\n')
+    return wrong, wrongPosesIndexAngles
+
+
+def getBestWorstCyclePoses(videoname, wrongPoses, alignedListUser, cycleTrainer, normalizedKeyPointsUser, minsUser,
+                           weights):
+    """
+    Retrieve the best and the worst poses among all the user's cycles poses
+    :param wrongPoses: path of the wrong poses
+    :param alignedListUser: path of the aligned user poses
+    :param cycleTrainer: trainer cycle
+    :param normalizedKeyPointsUser: user keypoints normalized
+    :param minsUser: user mins
+    :param weights: keypoints weights
+    :return: array of the best and worst user poses
+    """
+    for el in wrongPoses:
+        wrongMeanPoses = alignedListUser[el[1]]  # this is the list of poses that belongs to the wrong mean pose
+        # now we should evaluate each pose of the mean pose and get the worst and the best
+        p = []
+        d = []
+        for pose in wrongMeanPoses:
+            idx, cycle = pose.split("|")
+            poseTrainer = cycleTrainer[el[0]]
+            poseUser = normalizedKeyPointsUser[int(idx) + minsUser[int(cycle)]]
+            distance = getAngleDistance(trainerPose=poseTrainer, userPose=poseUser, errorAngles=15, weights=weights)
+            p.append(pose)
+            d.append(distance)
+        maxd = max(d)
+        mind = min(d)
+        bestp = p[d.index(mind)]
+        worstp = p[d.index(maxd)]
+        print("For pose " + str(el[0]) + " the best is " + bestp + " with distance " + str(
+            mind) + " and the worst is " + worstp + " with distance " + str(maxd))
+
+        idxb, cycleb = bestp.split("|")
+        idxw, cyclew = worstp.split("|")
+        userPoses = [int(idxb) + minsUser[int(cycleb)], int(idxw) + minsUser[int(cyclew)]]
+        plotTrainerVsBestWorst(videoname, cycleTrainer, normalizedKeyPointsUser, el[0], userPoses, str(mind), str(maxd))

@@ -228,6 +228,45 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
         countPose += 1
 
 
+def plotTrainerVsBestWorst(videoname, trainerKeypoints, userKeypoints, trainerPose, userPoses, bestd, worstd):
+    """
+
+    :param videoname:
+    :param trainerKeypoints:
+    :param userKeypoints:
+    :param trainerPose:
+    :param userPoses:
+    :param bestd:
+    :param worstd:
+    :return:
+    """
+    if not os.path.exists('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst'):
+        os.makedirs('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst')
+
+    plt.style.use('dark_background')
+    mainFig = plt.figure(figsize=(18, 8))
+    mainFig.suptitle(videoname)
+    gs = mainFig.add_gridspec(1, 3)
+
+    subfig = mainFig.add_subplot(gs[0, 0])
+    subfig.set_title("Trainer Pose " + str(trainerPose))
+    plotPoseFromKeypoints(trainerKeypoints[trainerPose], subfig, lbl='Trainer')
+
+    subfig1 = mainFig.add_subplot(gs[0, 1])
+    subfig1.set_title("Skeleton Bets User Pose " + str(userPoses[0]))
+    subfig1.set_xlabel("Distance " + bestd)
+    plotPoseFromKeypoints(userKeypoints[userPoses[0]], subfig1, lbl='User')
+
+    subfig2 = mainFig.add_subplot(gs[0, 2])
+    subfig2.set_title("Skeleton Worst User Pose " + str(userPoses[1]))
+    subfig2.set_xlabel("Distance " + worstd)
+    plotPoseFromKeypoints(userKeypoints[userPoses[1]], subfig2, lbl='User')
+
+    plt.savefig('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst/Trainer ' + str(trainerPose) +
+                ' User ' + str(userPoses[0]) + '-' + str(userPoses[1]) + '.png')
+    plt.close()
+
+
 def plotIndexOfFit(path, stdsUser, stdsTrainer, firstCycle=False, title=None):
     trainerM = []
     userM = []
