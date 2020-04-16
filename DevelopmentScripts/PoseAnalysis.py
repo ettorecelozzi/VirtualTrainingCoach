@@ -300,37 +300,47 @@ def getPointsAngles(means, weights):
     :param weights: weights of the joints
     :return: array of the joints angles
     """
+    angles = []
+    for pose in means:
+        frameAngles = getPoseAngle(pose,weights)
+        angles.append(frameAngles)
+    return angles
+
+def getPoseAngle(pose, weights):
+    """
+    For a pose retrieve the angle between the joints specified in the 'jointsNumber' list.
+    To get cosine of the angle the dot product formula is used, then the arccos returns the angle
+    :param pose: pose
+    :param weights: weights of the joints
+    :return: array of the joints angles
+    """
     jointsNumber = {'leftUpperBody': [[8, 1], [1, 2], [2, 3], [3, 4]],
                     'rightUpperBody': [[8, 1], [1, 5], [5, 6], [6, 7]],
                     'leftLowerBody': [[1, 8], [8, 9], [9, 10], [10, 11], [11, 23]],
                     'rightLowerBody': [[1, 8], [8, 12], [12, 13], [13, 14], [14, 20]], }
 
-    angles = []
-    for pose in means:
-        frameAngles = []
-        for joints in jointsNumber.values():  # number of keypoints reduced
-            for couple in range(len(joints) - 1):
-                jointIndex = joints[couple]  # couple of joints that forms the vector
-                couple += 1
-                jointIndexN = joints[couple]  # next couple of joints that forms the vector
-                if weights[jointIndex[1]][1] == 0: continue
-                bodyVector1 = np.subtract(np.array([float(pose[jointIndex[1]][0]), float(pose[jointIndex[1]][1])]),
-                                          np.array([float(pose[jointIndex[0]][0]), float(pose[jointIndex[0]][1])]))
-                bodyVector2 = np.subtract(np.array([float(pose[jointIndexN[0]][0]), float(pose[jointIndexN[0]][1])]),
-                                          np.array([float(pose[jointIndexN[1]][0]), float(pose[jointIndexN[1]][1])]))
-                # vector normalization
-                bodyVector1 = np.divide(bodyVector1, np.linalg.norm(bodyVector1))
-                bodyVector2 = np.divide(bodyVector2, np.linalg.norm(bodyVector2))
-                # "inverse" dot product
-                angle = np.degrees(np.arccos(np.clip((np.dot(bodyVector1, bodyVector2)), -1.0, 1.0)))
-                # string to identify the calculated angle
-                strAngle = str(jointIndex[1]) + "-" + str(jointIndex[0]) + "|" + \
-                           str(jointIndexN[0]) + "-" + str(jointIndexN[1])
-                # list of: joint linked to neck, angle formed with torso, each long 25
-                frameAngles.append([strAngle, angle])
-        angles.append(frameAngles)
-    return angles
-
+    frameAngles = []
+    for joints in jointsNumber.values():  # number of keypoints reduced
+        for couple in range(len(joints) - 1):
+            jointIndex = joints[couple]  # couple of joints that forms the vector
+            couple += 1
+            jointIndexN = joints[couple]  # next couple of joints that forms the vector
+            if weights[jointIndex[1]][1] == 0: continue
+            bodyVector1 = np.subtract(np.array([float(pose[jointIndex[1]][0]), float(pose[jointIndex[1]][1])]),
+                                      np.array([float(pose[jointIndex[0]][0]), float(pose[jointIndex[0]][1])]))
+            bodyVector2 = np.subtract(np.array([float(pose[jointIndexN[0]][0]), float(pose[jointIndexN[0]][1])]),
+                                      np.array([float(pose[jointIndexN[1]][0]), float(pose[jointIndexN[1]][1])]))
+            # vector normalization
+            bodyVector1 = np.divide(bodyVector1, np.linalg.norm(bodyVector1))
+            bodyVector2 = np.divide(bodyVector2, np.linalg.norm(bodyVector2))
+            # "inverse" dot product
+            angle = np.degrees(np.arccos(np.clip((np.dot(bodyVector1, bodyVector2)), -1.0, 1.0)))
+            # string to identify the calculated angle
+            strAngle = str(jointIndex[1]) + "-" + str(jointIndex[0]) + "|" + \
+                       str(jointIndexN[0]) + "-" + str(jointIndexN[1])
+            # list of: joint linked to neck, angle formed with torso, each long 25
+            frameAngles.append([strAngle, angle])
+    return frameAngles
 
 def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
     """
@@ -364,6 +374,18 @@ def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
             wrongPosesIndex[couple] = - 1
     return wrongPoses, wrongPosesIndex
 
+def getAngleDistance(trainerPose,userPose,errorAngles,weights):
+    trainerAngles = getPoseAngle(trainerPose,weights)
+    userAngles = getPoseAngle(userPose, weights)
+    error = 0
+    keypointsWrong = []
+    for keypoint in range(len(trainerAngles)):
+        # note that at this point the keypoint 0 is the first angle calculated not the keypoint number 0
+        trainerAngle = trainerAngles[keypoint][1]
+        userAngle = userAngles[keypoint][1]
+        if userAngle > trainerAngle + errorAngles or userAngle < trainerAngle - errorAngles:
+            error += weights[int(trainerAngles[keypoint][0][0])][1] * abs(trainerAngle-userAngle)
+    return error
 
 def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     """
@@ -392,5 +414,9 @@ def compareChecker(trainerCycle, userCycle, path, weights, errorAngles):
     print(wrongPosesAngles)
     print('Couple of poses wrong ANGLES:')
     notZeroAngles = np.nonzero(wrongPosesIndexAngles)[0]
-    for i in notZeroAngles: print(str(path[i]), end=', ')
+    wrong = []
+    for i in notZeroAngles:
+        wrong.append(path[i])
+        print(str(path[i]), end=', ')
     print('\nNumber of errors ANGLES: ' + str(len(notZeroAngles)) + '/' + str(len(path)))
+    return wrong
