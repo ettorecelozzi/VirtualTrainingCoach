@@ -99,7 +99,7 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
                     keypoints_withConfidence.append(datum.poseKeypoints[0])
                 else:
                     keypoints.append(np.zeros((25, 2)))
-                    keypoints_withConfidence.append(np.zeros(25, 3))
+                    keypoints_withConfidence.append(np.zeros((25, 3)))
         else:
             if currentframe == -1:
                 print("Video not found")
