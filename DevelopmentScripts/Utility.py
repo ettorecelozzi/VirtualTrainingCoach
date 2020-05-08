@@ -57,11 +57,12 @@ def getCleanName(videoname, user=False):
     return cleanName, noErrorName
 
 
-def plotPoseFromKeypoints(keypoints, ax, color=False):
+def plotPoseFromKeypoints(keypoints, ax, lbl='Trainer', color=False):
     """
     Plot poses given keypoints
     :param keypoints: one frame, (25,2)
     :param ax: axis where to plot
+    :param label: user or trainer keypoints
     :param color: decide to change or not the color
     :return: plt object
     """
@@ -84,7 +85,7 @@ def plotPoseFromKeypoints(keypoints, ax, color=False):
 
     lc = mc.LineCollection(pointToMerge, colors=colors[0], linewidths=2)
     ax.add_collection(lc)
-    kp = mpatches.Patch(color=colors[0], label='Trainer')
+    kp = mpatches.Patch(color=colors[0], label=lbl)
     x = []
     y = []
     label = []
@@ -99,7 +100,7 @@ def plotPoseFromKeypoints(keypoints, ax, color=False):
     # plt.scatter(400, 300, color="black")  # values needed to avoid that the pose is stretched
     # plt.scatter(800, 500, color="black")
     count = 0
-    Kp_L = mpatches.Patch(color=colors[2], label='Trainer KeyPts')
+    Kp_L = mpatches.Patch(color=colors[2], label=lbl + ' KeyPts')
     for i in range(len(x)):
         if i in separate:
             if count % 2 == 0:
@@ -154,7 +155,7 @@ def plotFromAlignedList(alignedList, mins, keypoints, videoname):
     plt.show()
 
 
-def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrainer, min, userMin=None,
+def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrainer, min=0, userMin=0,
                       videonameUser=None, op=None, opWrapper=None):
     """
     Given the last path that compare the trainer exercise with the user and plot the poses.
@@ -169,6 +170,9 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
     :param op: Openpose tool
     :param opWrapper: Openpose tool
     """
+    if not os.path.exists('./Plots/TrainerVsUser/' + videonameTrainer):
+        os.makedirs('./Plots/TrainerVsUser/' + videonameTrainer)
+
     plt.style.use('dark_background')
     videonameUser = videonameTrainer if videonameUser is None else videonameUser
     userMin = min if userMin is None else userMin
@@ -179,7 +183,7 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
         trainerKeypoints = keypoints[trainerPose]  # frame keypoints for the trainerPose
         userKeypoints = keypointsUser[userPose]
 
-        if countPose % 25 == 0:
+        if wrongPoses[couple] == -1:  # change here to choose which poses show
             mainFig = plt.figure(figsize=(18, 8))
             mainFig.suptitle(videonameTrainer)
             gs = mainFig.add_gridspec(1, 3)
@@ -201,11 +205,11 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
             else:
                 subfig = mainFig.add_subplot(gs[0, 0])
                 subfig.set_title("Skeleton Pose " + str(trainerPose))
-                plotPoseFromKeypoints(trainerKeypoints, subfig)
+                plotPoseFromKeypoints(trainerKeypoints, subfig, lbl='Trainer')
 
                 subfig1 = mainFig.add_subplot(gs[0, 1])
                 subfig1.set_title("Skeleton User Pose " + str(userPose))
-                plotPoseFromKeypoints(userKeypoints, subfig1)
+                plotPoseFromKeypoints(userKeypoints, subfig1, lbl='User')
 
             subfig2 = mainFig.add_subplot(gs[0, 2])
             subfig2.set_title("Poses overlay")
@@ -214,14 +218,53 @@ def plotTrainerVsUser(path, wrongPoses, keypoints, keypointsUser, videonameTrain
             plt.gca().invert_yaxis()
 
             if wrongPoses[couple] == -1:
-                plt.gcf().text(0.45, 0.04, 'Wrong for mean in std range checker', color="red", fontsize=15)
+                plt.gcf().text(0.45, 0.04, 'Wrong for angles checker', color="red", fontsize=15)
             else:
-                plt.gcf().text(0.45, 0.04, 'Correct for mean in std range checker', color="white", fontsize=15)
-            plt.show()
-            plt.savefig('./Plots/TrainerVsUser/' + videonameTrainer + ' Trainer: ' + str(
-                min + trainerPose) + ', User: ' + str(userMin + userPose))
+                plt.gcf().text(0.45, 0.04, 'Correct for angles checker', color="white", fontsize=15)
+            # plt.show()
+            plt.savefig('./Plots/TrainerVsUser/' + videonameTrainer + '/Trainer ' + str(min + trainerPose) +
+                        ' User ' + str(userMin + userPose) + '.png')
             plt.close()
         countPose += 1
+
+
+def plotTrainerVsBestWorst(videoname, trainerKeypoints, userKeypoints, trainerPose, userPoses, bestd, worstd):
+    """
+
+    :param videoname:
+    :param trainerKeypoints:
+    :param userKeypoints:
+    :param trainerPose:
+    :param userPoses:
+    :param bestd:
+    :param worstd:
+    :return:
+    """
+    if not os.path.exists('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst'):
+        os.makedirs('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst')
+
+    plt.style.use('dark_background')
+    mainFig = plt.figure(figsize=(18, 8))
+    mainFig.suptitle(videoname)
+    gs = mainFig.add_gridspec(1, 3)
+
+    subfig = mainFig.add_subplot(gs[0, 0])
+    subfig.set_title("Trainer Pose " + str(trainerPose))
+    plotPoseFromKeypoints(trainerKeypoints[trainerPose], subfig, lbl='Trainer')
+
+    subfig1 = mainFig.add_subplot(gs[0, 1])
+    subfig1.set_title("Skeleton Bets User Pose " + str(userPoses[0]))
+    subfig1.set_xlabel("Distance " + bestd)
+    plotPoseFromKeypoints(userKeypoints[userPoses[0]], subfig1, lbl='User')
+
+    subfig2 = mainFig.add_subplot(gs[0, 2])
+    subfig2.set_title("Skeleton Worst User Pose " + str(userPoses[1]))
+    subfig2.set_xlabel("Distance " + worstd)
+    plotPoseFromKeypoints(userKeypoints[userPoses[1]], subfig2, lbl='User')
+
+    plt.savefig('./Plots/TrainerVsUser/' + videoname + '_BestVsWorst/Trainer ' + str(trainerPose) +
+                ' User ' + str(userPoses[0]) + '-' + str(userPoses[1]) + '.png')
+    plt.close()
 
 
 def plotIndexOfFit(path, stdsUser, stdsTrainer, firstCycle=False, title=None):
@@ -253,9 +296,9 @@ def plotIndexOfFit(path, stdsUser, stdsTrainer, firstCycle=False, title=None):
     plt.plot(fits, label='Index of fit')
     plt.legend(loc='upper left')
     plt.title(title)
-    plt.savefig('./Plots/IndexOfFit/First cycle/' + title) if firstCycle is True else plt.savefig(
-        './Plots/IndexOfFit/Normal/' + title)
-    plt.clf()
+    # plt.savefig('./Plots/IndexOfFit/First cycle/' + title) if firstCycle is True else plt.savefig(
+    #     './Plots/IndexOfFit/Normal/' + title)
+    plt.show()
 
 
 def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1, length=45, fill='█', printEnd="\r"):

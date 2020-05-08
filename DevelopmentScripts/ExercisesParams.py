@@ -94,7 +94,7 @@ def paramsArmClap():
     # Body keypoints {list index : [body component, weight]}
     keyPointsWeights = {
         0: ["Nose", 0],
-        1: ["Neck", 1],
+        1: ["Neck", 0],
         2: ["RShoulder", 1],
         3: ["RElbow", 1],
         4: ["RWrist", 1],
