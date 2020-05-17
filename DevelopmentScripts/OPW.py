@@ -2,7 +2,19 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 
-def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, delta=1, VERBOSE=1):
+def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
+    """
+    OPW aligning
+    :param x: first sequence to align. shape=(N,d) d > 2
+    :param y: second sequence to align. shape=(N,d) d > 2
+    :param a: weights of the first points sequence. If none uniform weights are used
+    :param b: weights of the second points sequence. If none uniform weights are used
+    :param lambda1: regularization term for the inverse difference moment (to be tuned)
+    :param lambda2: regularization term for Kullback-Leibler (KL) (to be tuned)
+    :param sigma: variance of the gaussian distribution
+    :param VERBOSE: whether display the iteration status
+    :return: distance (float value), transport matrix T, shape=(N,N)
+    """
     tol = 0.005
     max_iter = 20  # higher means more accurate transport vector
     N, M = x.shape[0], y.shape[0]
@@ -20,7 +32,7 @@ def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, delta=1, VERBOSE=1):
 
             # Gaussian distribution centered at the intersection on the diagonal
             # (prior distribution of the transport matrix)
-            p[i, j] = np.exp(-np.power(diag, 2) / 2 * np.power(delta, 2)) / (delta * np.sqrt(2 * np.pi))
+            p[i, j] = np.exp(-np.power(diag, 2) / 2 * np.power(sigma, 2)) / (sigma * np.sqrt(2 * np.pi))
 
             # constant defined at page 6 of the OPW paper
             s[i, j] = lambda1 / (np.power((i / N - j / M), 2) + 1)
