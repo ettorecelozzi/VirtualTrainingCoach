@@ -378,6 +378,14 @@ def checkByJointsAngles(trainerCycle, userCycle, weights, path, errorAngles):
 
 
 def getAngleDistance(trainerPose, userPose, errorAngles, weights):
+    """
+
+    :param trainerPose:
+    :param userPose:
+    :param errorAngles:
+    :param weights:
+    :return:
+    """
     trainerAngles = getPoseAngle(trainerPose, weights)
     userAngles = getPoseAngle(userPose, weights)
     error = 0
