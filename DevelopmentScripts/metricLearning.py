@@ -2,7 +2,7 @@ import numpy as np
 import scipy.io
 import fastdtw
 from DevelopmentScripts.Utility import printProgressBar
-
+from DevelopmentScripts.OPW import opw
 
 def optimization(X, z, classNum, templateNum, l):
     """
@@ -65,6 +65,7 @@ def optimization(X, z, classNum, templateNum, l):
                 # update T
                 # d,path = myDTW.dtw(X[c][n].dot(W),V[c])
                 d, path = fastdtw.fastdtw(X[c][n].dot(W), V[c])
+                # d, path = opw(X[c][n].dot(W), V[c], None, None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=0)
                 loss = loss + d
                 T[c][n] = pathToMat(path, T[c][n])
             loss = loss / N + np.trace(W.dot(np.transpose(W)))

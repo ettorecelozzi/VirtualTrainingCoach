@@ -3,6 +3,8 @@ import os
 from DevelopmentScripts.metricLearning import optimization
 from collections import defaultdict
 import pandas as pd
+from DevelopmentScripts import PoseAnalysis
+from DevelopmentScripts import Normalization as norm
 
 
 def mahalanobis_like_distance(X, Y, L):
@@ -13,31 +15,37 @@ def mahalanobis_like_distance(X, Y, L):
     :param M: matrix, shape=(d,d)
     :return: distance between each sequence, shape=()
     """
-    dist = []
-    for x, y in zip(X, Y):
-        # sqrt slow down a lot, maybe can be removed
-        # dist.append(np.sqrt(np.dot(np.transpose(np.dot(L, x) - np.dot(L, y)),
-        #                            np.dot(L, x) - np.dot(L, y))))
-        dist.append(np.dot(np.dot(np.transpose(np.subtract(x, y)), L), np.subtract(x, y)))
+    # dist = []
+    # for x, y in zip(X, Y):
+    #     dist.append(np.dot(np.dot(np.transpose(np.subtract(x, y)), L), np.subtract(x, y)))
+
+    # sqrt slow down a lot, maybe can be removed
+    dist = (np.sqrt(np.dot(np.transpose(np.dot(L, X) - np.dot(L, Y)),
+                           np.dot(L, X) - np.dot(L, Y))))
     return dist
 
 
 # training set initialization
 pathToTrain = './Dataset/train/'
 exerciseFolders = os.listdir(pathToTrain)
-# trainingSet = []
-# for folder in exerciseFolders:
-#     exerciseExecutions = os.listdir(pathToTrain + folder)
-#     classExercise = []
-#     for exercise in exerciseExecutions:
-#         keypoints = np.load(pathToTrain + folder + '/' + exercise)
-#         classExercise.append(keypoints.reshape((keypoints.shape[0], keypoints.shape[1] * keypoints.shape[2])))
-#     trainingSet.append(classExercise)
-#
-# # training
-# W = optimization(trainingSet, 0, 0, 4, 0.01)
-# np.save('./Dataset/W.npy', W)
-W = np.load('./Dataset/W.npy')
+trainingSet = []
+for folder in exerciseFolders:
+    exerciseExecutions = os.listdir(pathToTrain + folder)
+    classExercise = []
+    for exercise in exerciseExecutions:
+        keypoints = np.load(pathToTrain + folder + '/' + exercise)
+        # keypoints normalization
+        meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keypoints, 50)
+        keypoints = norm.normalize(meanTorso, meanHipX, meanHipY, keypoints.copy())
+
+        classExercise.append(keypoints.reshape((keypoints.shape[0], keypoints.shape[1] * keypoints.shape[2])))
+
+    trainingSet.append(classExercise)
+
+# training
+W = optimization(trainingSet, 0, 0, 4, 0.01)
+np.save('./Dataset/W_kps_normalized.npy', W)
+W = np.load('./Dataset/W_kps_normalized.npy')
 L = np.dot(W, np.transpose(W))
 
 # test
@@ -52,10 +60,18 @@ resultDistances = defaultdict(lambda: defaultdict(list))
 for folder in exerciseFolders:
     exerciseExecutions = os.listdir(pathToTest + folder)
     for exercise in exerciseExecutions:
-        keypoints = np.load(pathToTest + folder + '/' + exercise)
-        Y = keypoints.reshape((keypoints.shape[0], keypoints.shape[1] * keypoints.shape[2]))
+        Y = np.load(pathToTest + folder + '/' + exercise)
+        # Keypoints normalization
+        meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(Y, 50)
+        Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
+        Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
+
         X = np.load('./Dataset/train/' + folder + '/' + trainerSequences[folder])
+        # Keypoints normalization
+        meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
+        X = norm.normalize(meanTorso, meanHipX, meanHipY, X.copy())
         X = X.reshape((X.shape[0], X.shape[1] * X.shape[2]))
+
         resultDistances[folder][exercise] = mahalanobis_like_distance(X, Y, L)
 
 # dataframe = pd.DataFrame.from_dict(resultDistances, orient='index')

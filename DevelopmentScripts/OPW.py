@@ -89,7 +89,7 @@ def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
             # solution of the Dual-Sinkhorn divergence problem
             criterion = np.linalg.norm(np.sum(np.abs(v * (np.dot(np.transpose(k), u)) - b), axis=0), np.inf)
             if criterion < tol:
-                print(f'Convergence reached, criterion: {criterion} tol: {tol}')
+                # print(f'Convergence reached, criterion: {criterion} tol: {tol}')
                 break
             if np.isnan(criterion):
                 raise Exception('NaN values have appeared during the fixed point iteration. This problem appears '
