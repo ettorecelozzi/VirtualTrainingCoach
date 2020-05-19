@@ -1,6 +1,5 @@
 import numpy as np
 import os
-from DevelopmentScripts.metricLearning import optimization
 from collections import defaultdict
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm

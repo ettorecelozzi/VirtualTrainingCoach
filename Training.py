@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from DevelopmentScripts.metricLearning import optimization
+from DevelopmentScripts.metricLearning import optimize
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm
 
@@ -39,7 +39,7 @@ def train(alignStrategy):
     # training
     if 'W_' + alignStrategy + '.npy' not in os.listdir('./Dataset/'):
         trainingSet = init_trainset()
-        W = optimization(trainingSet, 0, 0, 4, 0.01)
+        W = optimize(trainingSet, 0, 0, 4, 0.01)
         np.save('./Dataset/W_opw_kps_normalized.npy', W)
     else:
         W = np.load('./Dataset/W_' + alignStrategy + '.npy')
