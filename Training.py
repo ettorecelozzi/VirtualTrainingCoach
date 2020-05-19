@@ -13,15 +13,15 @@ def mahalanobis_like_distance(X, Y, L):
     :param X: sequences, shape=(N,d)
     :param Y: sequences, shape=(N,d)
     :param M: matrix, shape=(d,d)
-    :return: distance between each sequence, shape=()
+    :return: distance between each sequence, shape=(N)
     """
-    # dist = []
-    # for x, y in zip(X, Y):
-    #     dist.append(np.dot(np.dot(np.transpose(np.subtract(x, y)), L), np.subtract(x, y)))
+    dist = []
+    for x, y in zip(X, Y):
+        dist.append(np.dot(np.dot(np.transpose(np.subtract(x, y)), L), np.subtract(x, y)))
 
     # sqrt slow down a lot, maybe can be removed
-    dist = (np.sqrt(np.dot(np.transpose(np.dot(L, X) - np.dot(L, Y)),
-                           np.dot(L, X) - np.dot(L, Y))))
+    # dist = (np.sqrt(np.dot(np.transpose(np.dot(L, X) - np.dot(L, Y)),
+    #                        np.dot(L, X) - np.dot(L, Y))))
     return dist
 
 
@@ -43,9 +43,9 @@ for folder in exerciseFolders:
     trainingSet.append(classExercise)
 
 # training
-W = optimization(trainingSet, 0, 0, 4, 0.01)
-np.save('./Dataset/W_kps_normalized.npy', W)
-W = np.load('./Dataset/W_kps_normalized.npy')
+# W = optimization(trainingSet, 0, 0, 4, 0.01)
+# np.save('./Dataset/W_opw_kps_normalized.npy', W)
+W = np.load('./Dataset/W_opw_kps_normalized.npy')
 L = np.dot(W, np.transpose(W))
 
 # test
