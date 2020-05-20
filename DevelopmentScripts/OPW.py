@@ -5,15 +5,15 @@ from scipy.spatial.distance import cdist
 def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
     """
     OPW aligning
-    :param x: first sequence to align. shape=(N,d) d > 2
-    :param y: second sequence to align. shape=(N,d) d > 2
+    :param x: first sequence to align. shape=(N1,d) d > 2
+    :param y: second sequence to align. shape=(N2,d) d > 2
     :param a: weights of the first points sequence. If none uniform weights are used
     :param b: weights of the second points sequence. If none uniform weights are used
     :param lambda1: regularization term for the inverse difference moment (to be tuned)
     :param lambda2: regularization term for Kullback-Leibler (KL) (to be tuned)
     :param sigma: variance of the gaussian distribution
     :param VERBOSE: whether display the iteration status
-    :return: distance (float value), transport matrix T, shape=(N,N)
+    :return: distance (float value), transport matrix T, shape=(N1,N2)
     """
     tol = 0.005
     max_iter = 20  # higher means more accurate transport vector
@@ -46,12 +46,6 @@ def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
 
     # This formula has been taken from page 6 of OPW paper.
     k = p * np.exp((s - d) / lambda2)  # every operator "*", "/" means element wise
-    # for i in range(k.shape[0]):
-    #     for j in range(k.shape[1]):
-    #         if k[i, j] < 1e-100:
-    #             k[i, j] = 1e-100
-    #         if k[i, j] > 1e100:
-    #             k[i, j] = 1e100
     '''
     With some parameters, some entries of K may exceed the matching-precision limit; in such cases, you may need
     to adjust the parameters, and/or normalize the input features in sequences or the matrix D; Please see the paper for
@@ -107,3 +101,21 @@ def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
     T = np.transpose(v) * (u * k)
 
     return dist, T
+
+
+def transport_vector_to_path(T):
+    """
+    Given a transport vector T generated aligning two sequences of dimension (N1,d), (N2,d), extract the sequences
+    aligning path
+    :param T: vector, shape=(N1,N2)
+    :return: path, shape=(max(N1,N2),)
+    """
+    path = []
+    if T.shape[0] > T.shape[1]:
+        for s1 in range(T.shape[0]):
+            path.append((s1, np.argmax(T[s1])))
+    else:
+        T = np.transpose(T)
+        for s1 in range(T.shape[0]):
+            path.append((np.argmax(T[s1]), s1))
+    return path

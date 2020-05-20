@@ -1,12 +1,13 @@
 import numpy as np
 import os
+from DevelopmentScripts.metricLearning import optimize
 from collections import defaultdict
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm
 from fastdtw import fastdtw
 from Training import train
 import random
-from DevelopmentScripts.OPW import opw
+from DevelopmentScripts.OPW import opw, transport_vector_to_path
 
 pathToTrain = './Dataset/train/'
 pathToTest = './Dataset/test/'
@@ -25,11 +26,11 @@ def mahalanobis_like_distance(X, Y, M):
     return dist
 
 
-def test_in_same_class(M, alignStrategy):
+def test_in_same_class(M, align_algorithm):
     """
     Compute the distance between a test file and a train file of the trainerSequences
     :param M: parameters matrix from the train, shape=(#joints * #coordinates, #joints * #coordinates)
-    :param alignStrategy: use opw or dtw
+    :param align_algorithm: use opw or dtw
     :return: dictionary of the distances between each test sequence and the reference train sequence
     """
     # dictionary that contain the train sequences to compare to the test sequences
@@ -55,9 +56,9 @@ def test_in_same_class(M, alignStrategy):
             Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
             Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
 
-            if alignStrategy == 'dtw':
+            if align_algorithm == 'dtw':
                 dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-            elif alignStrategy == 'opw':
+            elif align_algorithm == 'opw':
                 dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=2.0, sigma=1, VERBOSE=0)
             else:
                 raise Exception('Align strategy not recognized')
@@ -65,11 +66,11 @@ def test_in_same_class(M, alignStrategy):
     return resultDistances
 
 
-def test_different_class(M, numberOfTests, alignStrategy, pathToSet=pathToTest):
+def test_different_class(M, numberOfTests, align_algorithm, pathToSet=pathToTest):
     """
     Given two sequences X,Y that belong to two different exercise class compute the difference
     :param M: parameters matrix from the train, shape=(#joints * #coordinates, #joints * #coordinates)
-    :param alignStrategy: use opw or dtw
+    :param align_algorithm: use opw or dtw
     :param numberOfTests: number of tests to perform, int
     :param pathToSet: path of the test or train folder
     """
@@ -83,6 +84,8 @@ def test_different_class(M, numberOfTests, alignStrategy, pathToSet=pathToTest):
         X = np.load(pathToSet + randomFolder1 + '/' + randomExercise1)
         Y = np.load(pathToSet + randomFolder2 + '/' + randomExercise2)
 
+        X = np.load(pathToTrain + 'arm-clap/arm-clap_1_c0.npy')
+        Y = np.load(pathToTrain + 'arm-clap/arm-clap_1_c1.npy')
         # Keypoints normalization
         meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
         X = norm.normalize(meanTorso, meanHipX, meanHipY, X.copy())
@@ -93,23 +96,25 @@ def test_different_class(M, numberOfTests, alignStrategy, pathToSet=pathToTest):
         Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
         Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
 
-        if alignStrategy == 'dtw':
+        if align_algorithm == 'dtw':
             dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-        elif alignStrategy == 'opw':
+        elif align_algorithm == 'opw':
             dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=0)
+            pp = transport_vector_to_path(T)
+            print(len(pp))
         else:
             raise Exception('Align strategy not recognized')
         print(f'Distance between **{randomExercise1.split(".")[0]}** and **{randomExercise2.split(".")[0]}**: {dist}')
 
 
-alignStrategy = 'opw'
+align_algorithm = 'opw'
 # training
-M = train(alignStrategy=alignStrategy)
+M = train(align_algorithm=align_algorithm)
 
 # test in the same class
-resultDistances = test_in_same_class(M, alignStrategy)
-for key in resultDistances.keys():
-    print(resultDistances[key])
+# resultDistances = test_in_same_class(M, align_algorithm)
+# for key in resultDistances.keys():
+#     print(resultDistances[key])
 
 # test between different classes
-test_different_class(M, numberOfTests=6, alignStrategy=alignStrategy, pathToSet=pathToTest)
+test_different_class(M, numberOfTests=1, align_algorithm=align_algorithm, pathToSet=pathToTest)

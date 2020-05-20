@@ -31,17 +31,17 @@ def init_trainset():
     return trainingSet
 
 
-def train(alignStrategy):
+def train(align_algorithm):
     """
     Compute the parameters matrix M and store the factorization W. M = W*W'
     :return: matrix M, shape=(d,d) with d dimension of pose
     """
     # training
-    if 'W_' + alignStrategy + '.npy' not in os.listdir('./Dataset/'):
+    if 'W_' + align_algorithm + '.npy' not in os.listdir('./Dataset/'):
         trainingSet = init_trainset()
         W = optimize(trainingSet, 0, 0, 4, 0.01)
         np.save('./Dataset/W_opw_kps_normalized.npy', W)
     else:
-        W = np.load('./Dataset/W_' + alignStrategy + '.npy')
+        W = np.load('./Dataset/W_' + align_algorithm + '.npy')
     M = np.dot(W, np.transpose(W))
     return M
