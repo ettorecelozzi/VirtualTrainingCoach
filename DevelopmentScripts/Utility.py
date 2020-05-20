@@ -57,15 +57,16 @@ def getCleanName(videoname, user=False):
     return cleanName, noErrorName
 
 
-def plotPoseFromKeypoints(keypoints, ax, lbl='Trainer', color=False):
+def plotPoseFromKeypoints(keypoints, ax=None, lbl='Trainer', color=False):
     """
     Plot poses given keypoints
     :param keypoints: one frame, (25,2)
     :param ax: axis where to plot
-    :param label: user or trainer keypoints
+    :param lbl: user or trainer keypoints
     :param color: decide to change or not the color
     :return: plt object
     """
+    if ax is None: fig, ax = plt.subplots()
     colors = ['blue', 'white', 'red'] if color is False else ['green', 'white', 'red']
     # coordinates of the points to tie
     lines = [(0, 15), (0, 16), (0, 17), (0, 18), (0, 1), (1, 8), (1, 2), (2, 3), (3, 4), (1, 5), (5, 6), (6, 7), (8, 9),

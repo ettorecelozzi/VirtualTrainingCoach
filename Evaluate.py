@@ -15,15 +15,42 @@ pathToTest = './Dataset/test/'
 
 def mahalanobis_like_distance(X, Y, M):
     """
-    Mahlanobis like distance between two array of sequences given the parameters matrix M
-    :param X: sequences, shape=(#joints, #coordinates)
-    :param Y: sequences, shape=(#joints, #coordinates)
+    Mahlanobis like distance between two sequences given the parameters matrix M
+    :param X: sequence, shape=(#joints * #coordinates)
+    :param Y: sequence, shape=(#joints * #coordinates)
     :param M: matrix, shape=(#joints * #coordinates, #joints * #coordinates)
-    :return: distance between each sequence, shape=(#joints)
+    :return: distance between each sequence, float
     """
-    # sqrt slow down a lot, maybe can be removed
+    # sqrt slow down, maybe can be removed
     dist = (np.sqrt(np.dot(np.transpose(np.dot(M, X) - np.dot(M, Y)), np.dot(M, X) - np.dot(M, Y))))
     return dist
+
+
+def distance_between_sequences(X, Y, M, align_algorithm):
+    # Keypoints normalization
+    meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
+    X = norm.normalize(meanTorso, meanHipX, meanHipY, X.copy())
+    X = X.reshape((X.shape[0], X.shape[1] * X.shape[2]))
+
+    # Keypoints normalization
+    meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(Y, 50)
+    Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
+    Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
+
+    resultDistances = []
+    resultDistancesE = []
+    if align_algorithm == 'dtw':
+        dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
+    elif align_algorithm == 'opw':
+        dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=2.0, sigma=1, VERBOSE=0)
+        path = transport_vector_to_path(T)
+    else:
+        raise Exception('Align strategy not recognized')
+    for el in path:
+        # MISSING metric that compute distance between joints
+        resultDistances.append(mahalanobis_like_distance(X[el[0]], Y[el[1]], M))
+        resultDistancesE.append(np.linalg.norm(X[el[0]] - Y[el[1]]))
+    return resultDistances
 
 
 def test_in_same_class(M, align_algorithm):
@@ -84,8 +111,9 @@ def test_different_class(M, numberOfTests, align_algorithm, pathToSet=pathToTest
         X = np.load(pathToSet + randomFolder1 + '/' + randomExercise1)
         Y = np.load(pathToSet + randomFolder2 + '/' + randomExercise2)
 
-        X = np.load(pathToTrain + 'arm-clap/arm-clap_1_c0.npy')
-        Y = np.load(pathToTrain + 'arm-clap/arm-clap_1_c1.npy')
+        # X = np.load(pathToTrain + 'arm-clap/arm-clap_1_c0.npy')
+        # Y = np.load(pathToTrain + 'arm-clap/arm-clap_1_c1.npy')
+
         # Keypoints normalization
         meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
         X = norm.normalize(meanTorso, meanHipX, meanHipY, X.copy())
@@ -100,21 +128,25 @@ def test_different_class(M, numberOfTests, align_algorithm, pathToSet=pathToTest
             dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
         elif align_algorithm == 'opw':
             dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=0)
-            pp = transport_vector_to_path(T)
-            print(len(pp))
         else:
             raise Exception('Align strategy not recognized')
         print(f'Distance between **{randomExercise1.split(".")[0]}** and **{randomExercise2.split(".")[0]}**: {dist}')
 
 
 align_algorithm = 'opw'
+
 # training
 M = train(align_algorithm=align_algorithm)
 
 # test in the same class
-# resultDistances = test_in_same_class(M, align_algorithm)
-# for key in resultDistances.keys():
-#     print(resultDistances[key])
+resultDistances = test_in_same_class(M, align_algorithm)
+for key in resultDistances.keys():
+    print(resultDistances[key])
 
 # test between different classes
-test_different_class(M, numberOfTests=1, align_algorithm=align_algorithm, pathToSet=pathToTest)
+test_different_class(M, numberOfTests=6, align_algorithm=align_algorithm, pathToSet=pathToTest)
+
+# distance between each joints
+X = np.load(pathToTrain + 'arm-clap/arm-clap_1_c0.npy')
+Y = np.load(pathToTrain + 'arm-clap/arm-clap_1_c1.npy')
+distance_between_sequences(X, Y, M, align_algorithm)

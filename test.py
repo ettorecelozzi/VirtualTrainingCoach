@@ -8,6 +8,10 @@ import pickle as pkl
 from DevelopmentScripts.ExercisesParams import getPickle
 from DevelopmentScripts.PoseAnalysis import *
 
+# kps_kth = np.load('./KTH-Joints/kth_output_NPY/person01_boxing_d1.npy')
+# plt = Utility.plotPoseFromKeypoints(kps_kth[0])
+# plt.show()
+
 getPickle()
 videoname = 'arm-clap'
 cleanName = Utility.getCleanName(videoname, False)[0]
@@ -52,6 +56,10 @@ wrongPoses, wrongPosesIndex = compareChecker(trainerCycle=cycleTrainer, userCycl
 # plot the trainer vs means user poses
 Utility.plotTrainerVsUser(path=path, wrongPoses=wrongPosesIndex, keypoints=cycleTrainer, keypointsUser=meansUser,
                           videonameTrainer=cleanName)
+
+wrongPosesIndexGood = [0 if i == -1 else -1 for i in wrongPosesIndex]
+Utility.plotTrainerVsUser(path=path, wrongPoses=wrongPosesIndexGood, keypoints=cycleTrainer, keypointsUser=meansUser,
+                          videonameTrainer=cleanName + '_Good')
 
 # plot the trainer vs best and worst user cycle poses
 getBestWorstCyclePoses(videoname=cleanName, wrongPoses=wrongPoses, alignedListUser=alignedListUser,
