@@ -172,7 +172,7 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 align_algorithm = 'opw'
 
 # training
-M = train(pathToSet='./MSRDataset/Keypoints/', align_algorithm=align_algorithm)
+M = train(pathToSet='./MSRDataset/', align_algorithm=align_algorithm)
 
 conf_matrix = confusion_matrix(M, './MSRDataset/Keypoints/', align_algorithm)
 dataframe = pd.DataFrame.from_dict(conf_matrix, orient='index')
