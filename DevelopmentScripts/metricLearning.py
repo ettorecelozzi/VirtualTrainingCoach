@@ -1,6 +1,6 @@
 import numpy as np
 import fastdtw
-import OPW
+from DevelopmentScripts.OPW import opw
 from DevelopmentScripts.Utility import printProgressBar
 
 
@@ -66,7 +66,7 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
                     d, path = fastdtw.fastdtw(trainset[c][n].dot(L), V[c])
                     T[c][n] = pathToMat(path, T[c][n])
                 else:
-                    d, T = OPW.opw(trainset[c][n].dot(L), V[c], a=None, b=None, lambda1=lambda1, lambda2=lambda2,
+                    d, T[c][n] = opw(trainset[c][n].dot(L), V[c], a=None, b=None, lambda1=lambda1, lambda2=lambda2,
                                    sigma=sigma, VERBOSE=0)
                 loss = loss + d
             loss = loss / N + np.trace(L.dot(np.transpose(L)))

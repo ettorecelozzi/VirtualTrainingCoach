@@ -169,7 +169,7 @@ def confusion_matrix(M, pathToSet, align_algorithm):
     return matrix
 
 
-align_algorithm = 'dtw'
+align_algorithm = 'opw'
 
 # training
 M = train(pathToSet='./MSRDataset/Keypoints/', align_algorithm=align_algorithm)
