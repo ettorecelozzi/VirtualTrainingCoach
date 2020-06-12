@@ -1,6 +1,7 @@
 import numpy as np
 import fastdtw
 import OPW
+from DevelopmentScripts.Utility import printProgressBar
 
 def optimize(trainset,templateNum,l,err_limit, align_algorithm = "dtL", lambda1=50, lambda2=12.1, sigma=1,):
     """
@@ -44,6 +45,7 @@ def optimize(trainset,templateNum,l,err_limit, align_algorithm = "dtL", lambda1=
     loss_old = 10 ^ 8
     maxIterations = 1000
     for k in range(maxIterations):
+        printProgressBar(k, maxIterations, 'Iteration: ')
         loss = 0
         L_a = np.zeros(shape=(dim,dim))
         L_b = np.zeros(shape=(dim,downdim))

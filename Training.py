@@ -4,7 +4,7 @@ from DevelopmentScripts.metricLearning import optimize
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm
 
-pathToTrain = './Dataset/train/'
+pathToTrain = './MSRDataset/Keypoints/'
 pathToTest = './Dataset/test/'
 
 
@@ -20,6 +20,7 @@ def init_trainset():
         exerciseExecutions = os.listdir(pathToTrain + folder)
         classExercise = []
         for exercise in exerciseExecutions:
+            if 'confidence' in exercise: continue
             keypoints = np.load(pathToTrain + folder + '/' + exercise)
             # keypoints normalization
             meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(keypoints, 50)
@@ -31,17 +32,17 @@ def init_trainset():
     return trainingSet
 
 
-def train(align_algorithm):
+def train(pathToSet, align_algorithm):
     """
     Compute the parameters matrix M and store the factorization W. M = W*W'
     :return: matrix M, shape=(d,d) with d dimension of pose
     """
     # training
-    if 'W_' + align_algorithm + '.npy' not in os.listdir('./Dataset/'):
+    if 'W_' + align_algorithm + '.npy' not in os.listdir(pathToSet):
         trainingSet = init_trainset()
         W = optimize(trainingSet, 0, 0, 4, 0.01)
-        np.save('./Dataset/W_opw_kps_normalized.npy', W)
+        np.save(pathToSet + 'W_' + align_algorithm + '.npy', W)
     else:
-        W = np.load('./Dataset/W_' + align_algorithm + '.npy')
+        W = np.load(pathToSet + 'W_' + align_algorithm + '.npy')
     M = np.dot(W, np.transpose(W))
     return M
