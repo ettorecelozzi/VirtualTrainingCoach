@@ -4,11 +4,10 @@ from DevelopmentScripts.metricLearning import optimize
 from DevelopmentScripts import PoseAnalysis
 from DevelopmentScripts import Normalization as norm
 
-pathToTrain = './MSRDataset/Keypoints/'
 pathToTest = './Dataset/test/'
 
 
-def init_trainset():
+def init_trainset(pathToTrain):
     """
     Build the correct normalized training set structure given the dataset
     :return: training set, shape=(#classes, #samples, #sequences, d)
@@ -39,7 +38,7 @@ def train(pathToSet, align_algorithm):
     """
     # training
     if 'W_' + align_algorithm + '.npy' not in os.listdir(pathToSet):
-        trainingSet = init_trainset()
+        trainingSet = init_trainset(pathToSet + '/Keypoints/')
         W = optimize(trainingSet, templateNum=4, l=0.01, err_limit=0.01, align_algorithm=align_algorithm)
         np.save(pathToSet + 'W_' + align_algorithm + '.npy', W)
     else:

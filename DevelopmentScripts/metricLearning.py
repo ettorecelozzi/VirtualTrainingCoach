@@ -4,7 +4,7 @@ from DevelopmentScripts.OPW import opw
 from DevelopmentScripts.Utility import printProgressBar
 
 
-def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1=50, lambda2=12.1, sigma=1):
+def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1=10, lambda2=0.5, sigma=12):
     """
     :param trainset: list containing the training sequences divided by class
                         trainset: a list with size of (1, the number of classes);
@@ -13,10 +13,10 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
     :param templateNum: dimensions of virtual sequences
     :param l: lambda value
     :param err_limit: bottom limit for the error to stop the optimization
-    :param align_algorithm: algorithm used to align sequences "dtL" or "opL"
-    :param lambda1: lambda 1 value used in OPL
-    :param lambda2: lambda 2 value used in OPL
-    :param sigma: sigma value used in OPL
+    :param align_algorithm: algorithm used to align sequences "dtw" or "opw"
+    :param lambda1: lambda 1 value used in OPW
+    :param lambda2: lambda 2 value used in OPW
+    :param sigma: sigma value used in OPW
     :return: the value of L in the decomposizìtion of M in mahalanobis distance
     """
     # create virtual sequences V
@@ -62,7 +62,7 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
             L = np.linalg.solve(L_a, L_b)  # instead inverting L_a solve the linear system
             for n in range(len(trainset[c])):
                 # update T
-                if (align_algorithm == "dtw"):
+                if align_algorithm == "dtw":
                     d, path = fastdtw.fastdtw(trainset[c][n].dot(L), V[c])
                     T[c][n] = pathToMat(path, T[c][n])
                 else:

@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 
-def opw(x, y, a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=1):
+def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, VERBOSE=1):
     """
     OPW aligning
     :param x: first sequence to align. shape=(N1,d) d > 2

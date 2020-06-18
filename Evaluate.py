@@ -12,6 +12,7 @@ import pandas as pd
 
 pathToTrain = './Dataset/train/'
 pathToTest = './Dataset/test/'
+dataset = './KTHDataset/'
 
 
 def mahalanobis_like_distance(X, Y, M):
@@ -27,6 +28,25 @@ def mahalanobis_like_distance(X, Y, M):
     return dist
 
 
+def get_dist_T(align_algorithm, X, Y, M):
+    """
+    Compute the distance and path given the strategy and the sequences
+    :param align_algorithm: dtw or opw
+    :param X: sequence 1
+    :param Y: sequence 2
+    :param M: learning matrix
+    :return: dist, path
+    """
+    if align_algorithm == 'dtw':
+        dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
+    elif align_algorithm == 'opw':
+        dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=2.0, sigma=1, VERBOSE=0)
+        path = transport_vector_to_path(T)
+    else:
+        raise Exception('Align strategy not recognized')
+    return dist, path
+
+
 def distance_between_sequences(X, Y, M, align_algorithm):
     # Keypoints normalization
     meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
@@ -40,13 +60,7 @@ def distance_between_sequences(X, Y, M, align_algorithm):
 
     resultDistances = []
     resultDistancesE = []
-    if align_algorithm == 'dtw':
-        dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-    elif align_algorithm == 'opw':
-        dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=2.0, sigma=1, VERBOSE=0)
-        path = transport_vector_to_path(T)
-    else:
-        raise Exception('Align strategy not recognized')
+    dist, path = get_dist_T(align_algorithm, X, Y, M)
     for el in path:
         # MISSING metric that compute distance between joints
         resultDistances.append(mahalanobis_like_distance(X[el[0]], Y[el[1]], M))
@@ -84,12 +98,7 @@ def test_in_same_class(M, align_algorithm):
             Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
             Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
 
-            if align_algorithm == 'dtw':
-                dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-            elif align_algorithm == 'opw':
-                dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=2.0, sigma=1, VERBOSE=0)
-            else:
-                raise Exception('Align strategy not recognized')
+            dist, path = get_dist_T(align_algorithm, X, Y, M)
             resultDistances[folder][exercise] = dist
     return resultDistances
 
@@ -125,12 +134,7 @@ def test_different_class(M, numberOfTests, align_algorithm, pathToSet=pathToTest
         Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
         Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
 
-        if align_algorithm == 'dtw':
-            dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-        elif align_algorithm == 'opw':
-            dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=0)
-        else:
-            raise Exception('Align strategy not recognized')
+        dist, path = get_dist_T(align_algorithm, X, Y, M)
         print(f'Distance between **{randomExercise1.split(".")[0]}** and **{randomExercise2.split(".")[0]}**: {dist}')
 
 
@@ -158,23 +162,17 @@ def confusion_matrix(M, pathToSet, align_algorithm):
             Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
             Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
 
-            if align_algorithm == 'dtw':
-                dist, path = fastdtw(np.dot(X, M), np.dot(Y, M))
-            elif align_algorithm == 'opw':
-                dist, T = opw(np.dot(X, M), np.dot(Y, M), a=None, b=None, lambda1=50, lambda2=12.1, sigma=1, VERBOSE=0)
-            else:
-                raise Exception('Align strategy not recognized')
-
+            dist, path = get_dist_T(align_algorithm, X, Y, M)
             matrix[folder][folder1] = dist
     return matrix
 
 
-align_algorithm = 'opw'
+align_algorithm = 'dtw'
 
 # training
-M = train(pathToSet='./MSRDataset/', align_algorithm=align_algorithm)
+M = train(pathToSet=dataset, align_algorithm=align_algorithm)
 
-conf_matrix = confusion_matrix(M, './MSRDataset/Keypoints/', align_algorithm)
+conf_matrix = confusion_matrix(M, dataset + 'Keypoints/', align_algorithm)
 dataframe = pd.DataFrame.from_dict(conf_matrix, orient='index')
 pd.set_option('display.max_columns', None)
 print(dataframe)
