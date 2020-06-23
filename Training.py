@@ -38,7 +38,8 @@ def train(pathToSet, align_algorithm):
     """
     # training
     if 'W_' + align_algorithm + '.npy' not in os.listdir(pathToSet):
-        trainingSet = init_trainset(pathToSet + '/Keypoints/')
+        # trainingSet = init_trainset(pathToSet + '/Keypoints/')
+        trainingSet = init_trainset(pathToSet + 'squat90/')
         W = optimize(trainingSet, templateNum=4, l=0.01, err_limit=0.01, align_algorithm=align_algorithm)
         np.save(pathToSet + 'W_' + align_algorithm + '.npy', W)
     else:

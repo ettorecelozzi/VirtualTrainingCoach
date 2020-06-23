@@ -170,12 +170,12 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 align_algorithm = 'dtw'
 
 # training
-M = train(pathToSet=dataset, align_algorithm=align_algorithm)
+M = train(pathToSet=pathToTrain, align_algorithm=align_algorithm)
 
-conf_matrix = confusion_matrix(M, dataset + 'Keypoints/', align_algorithm)
-dataframe = pd.DataFrame.from_dict(conf_matrix, orient='index')
-pd.set_option('display.max_columns', None)
-print(dataframe)
+# conf_matrix = confusion_matrix(M, dataset + 'Keypoints/', align_algorithm)
+# dataframe = pd.DataFrame.from_dict(conf_matrix, orient='index')
+# pd.set_option('display.max_columns', None)
+# print(dataframe)
 
 # # test in the same class
 # resultDistances = test_in_same_class(M, align_algorithm)
