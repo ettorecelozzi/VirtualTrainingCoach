@@ -12,7 +12,7 @@ import pandas as pd
 
 pathToTrain = './Dataset/train/'
 pathToTest = './Dataset/test/'
-dataset = './KTHDataset/'
+dataset = './MSRDataset/'
 
 
 def mahalanobis_like_distance(X, Y, M):
