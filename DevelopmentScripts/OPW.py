@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 
-def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, VERBOSE=1):
+def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, M=None, VERBOSE=1):
     """
     OPW aligning
     :param x: first sequence to align. shape=(N1,d) d > 2
@@ -12,6 +12,7 @@ def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, VERBOSE=1):
     :param lambda1: regularization term for the inverse difference moment (to be tuned)
     :param lambda2: regularization term for Kullback-Leibler (KL) (to be tuned)
     :param sigma: variance of the gaussian distribution
+    :param M: learning matrix used to compute distance between sequences
     :param VERBOSE: whether display the iteration status
     :return: distance (float value), transport matrix T, shape=(N1,N2)
     """
@@ -37,8 +38,13 @@ def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, VERBOSE=1):
             # constant defined at page 6 of the OPW paper
             s[i, j] = lambda1 / (np.power((i / N - j / M), 2) + 1)
 
-    # pairwise distance between x and y
-    d = cdist(x, y, 'sqeuclidean')
+    if M is None:
+        # pairwise distance between x and y
+        d = cdist(x, y, 'sqeuclidean')
+    else:
+        # Malhanobis like distance using the learning matrix
+        d = cdist(x, y, lambda X, Y:
+        (np.sqrt(np.dot(np.transpose(np.dot(M, X) - np.dot(M, Y)), (np.dot(M, X) - np.dot(M, Y))))))
     ''' 
     In cases the instances in sequences are not normalized and/or are very high-dimensional, the matrix D can be
     normalized or scaled as follows: D = D/max(max(D));  D = D/(10^2)
