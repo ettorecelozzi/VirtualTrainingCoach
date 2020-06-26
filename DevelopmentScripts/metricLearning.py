@@ -3,7 +3,7 @@ import fastdtw
 from DevelopmentScripts.OPW import opw
 from DevelopmentScripts.Utility import printProgressBar
 
-
+dataset = './MSRDataset/'
 def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1=10, lambda2=0.5, sigma=12):
     """
     :param trainset: list containing the training sequences divided by class
@@ -26,7 +26,6 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
     activedim = 0
     downdim = classNum * templateNum
     dim = trainset[0][0].shape[1]
-    N = sum(trainsetnum)
     for c in range(classNum):
         trainsetnum[c] = len(trainset[c])
         V.append(np.zeros(shape=(templateNum, downdim)))
@@ -34,6 +33,7 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
             V[c][a][activedim] = 1
             activedim += 1
     # initialize the alignment matrices T
+    N = np.sum(trainsetnum)
     T = []
     for c in range(classNum):
         tmpT = []
@@ -48,8 +48,10 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
     for k in range(maxIterations):
         printProgressBar(k, maxIterations, 'Iteration: ' + str(k) + '/' + str(maxIterations))
         loss = 0
-        L_a = np.zeros(shape=(dim, dim))
-        L_b = np.zeros(shape=(dim, downdim))
+        # L_a = np.zeros(shape=(dim, dim))
+        # L_b = np.zeros(shape=(dim, downdim))
+        L_a = np.load(dataset + 'L_a_' + align_algorithm + '.npy')
+        L_b = np.load(dataset + 'L_b_' + align_algorithm + '.npy')
         for c in range(classNum):
             for n in range(len(trainset[c])):
                 for i in range(trainset[c][n].shape[0] - 1):
@@ -74,6 +76,9 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
                 break
             else:
                 loss_old = loss
+    # np.save(dataset + 'L_a_' + align_algorithm + '.npy', L_a)
+    # np.save(dataset + 'L_b_' + align_algorithm + '.npy', L_b)
+    # np.save(dataset + 'T_' + align_algorithm + '.npy', T)
     return L
 
 
