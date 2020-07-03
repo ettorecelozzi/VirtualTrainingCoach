@@ -46,27 +46,28 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
     :param rotate: boolean to specify if a rotation is needed
     :return: boolean, extraction successful or not
     """
-    video_input_path = './Videos/' + folder + '/' + exerciseName + '/' + videoname + '.mp4'
-    video_output_path = './Videos/' + folder + '/' + exerciseName + '/' + videoname + '_30fps.mp4'
+    video_input_path = './Dataset/Videos/' + folder + '/' + videoname + '.mp4'
+    video_output_path = './Dataset/Videos/' + folder + '/' + videoname + '_30fps.mp4'
     c = 'ffmpeg -y -i ' + video_input_path + ' -r 30 -c:v libx264 -b:v 3M -strict -2 -movflags faststart ' \
         + video_output_path
     subprocess.call(c, shell=True)
     os.remove(video_input_path)
     os.rename(video_output_path, video_input_path)
 
-    cam = cv2.VideoCapture('./Videos/' + folder + '/' + exerciseName + '/' + videoname + '.mp4')
+    cam = cv2.VideoCapture('./Dataset/Videos/' + folder + '/' + videoname + '.mp4')
     print('Video fps: ' + str(cam.get(cv2.CAP_PROP_FPS)))
 
     # creating frames' folder
-    if os.path.exists('Frames/' + videoname):
-        shutil.rmtree('./Frames/' + videoname + '/')
-    os.makedirs('Frames/' + videoname)
+    if not os.path.exists('./Dataset/Frames/' + videoname):
+        os.makedirs('./Dataset/Frames/' + videoname)
 
     # frame
     currentframe = -1  # starting frame (increment done before the iteration)
     frameFrequency = 0
     keypoints = []
+    keypoints_flipped = []
     keypoints_withConfidence = []
+    keypoints_withConfidence_flipped = []
     while True:
 
         # reading from frame
@@ -76,7 +77,7 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
             if frameFrequency == 0 or currentframe % frameFrequency == 0:
                 datum = op.Datum()
 
-                name = './Frames/' + videoname + '/frame' + str(currentframe) + '.jpg'
+                name = './Dataset/Frames/' + videoname + '/frame' + str(currentframe) + '.jpg'
                 print('Creating...' + name)
                 # writing the extracted images
                 if rotate is True:
@@ -87,6 +88,7 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
                 imgToProcess = cv2.imread(name)
                 datum.cvInputData = imgToProcess
                 opWrapper.emplaceAndPop([datum])
+                # os.remove(name)
 
                 # Display Image
                 # print("Body keypoints: \n" + str(datum.poseKeypoints))
@@ -100,14 +102,48 @@ def getSkeletonPoints(videoname, folder, exerciseName, op, opWrapper, rotate=Fal
                 else:
                     keypoints.append(np.zeros((25, 2)))
                     keypoints_withConfidence.append(np.zeros((25, 3)))
+
+                # process frame
+                imgToProcessf = cv2.imread(name)
+                imgToProcess = np.fliplr(imgToProcessf)  # flip image to augment dataset
+                datum.cvInputData = imgToProcess.copy()
+                opWrapper.emplaceAndPop([datum])
+                # os.remove(name)
+
+                # Display Image
+                # print("Body keypoints: \n" + str(datum.poseKeypoints))
+                img = datum.cvOutputData
+                # cv2.imshow("frame" + str(currentframe) + " flipped", img)
+                # cv2.waitKey(0)
+                # cv2.destroyAllWindows()
+                if datum.poseKeypoints.size > 1:
+                    keypoints_flipped.append(datum.poseKeypoints[0][:, :2])  # list append is faster than numpy append
+                    keypoints_withConfidence_flipped.append(datum.poseKeypoints[0])
+                else:
+                    keypoints_flipped.append(np.zeros((25, 2)))
+                    keypoints_withConfidence_flipped.append(np.zeros((25, 3)))
+
         else:
             if currentframe == -1:
                 print("Video not found")
                 return
             else:
+
+                if not os.path.exists('./Dataset/Keypoints/' + folder):
+                    os.makedirs('./Dataset/Keypoints/' + folder)
+
                 keypoints = np.asarray(keypoints)  # numpy arrays are more handy and memory efficient
-                np.save('./KeyPoints/' + folder + '/' + videoname + '.npy', keypoints)
-                np.save('./KeyPoints/' + folder + '/' + videoname + '_with_confidence.npy', keypoints_withConfidence)
+                keypoints_flipped = np.asarray(keypoints_flipped)  # numpy arrays are more handy and memory efficient
+                keypoints_withConfidence = np.asarray(keypoints_withConfidence)
+                keypoints_withConfidence_flipped = np.asarray(keypoints_withConfidence_flipped)
+
+                np.save('./Dataset/Keypoints/' + folder + videoname + '.npy', keypoints)
+                np.save('./Dataset/Keypoints/' + folder + 'flipped_' + videoname + '.npy', keypoints_flipped)
+
+                np.save('./Dataset/Keypoints/' + folder + videoname + '_with_confidence.npy',
+                        keypoints_withConfidence)
+                np.save('./Dataset/Keypoints/' + folder + 'flipped_' + videoname + '_with_confidence.npy',
+                        keypoints_withConfidence_flipped)
                 print("\nVideo ended\n")
                 # Release all space and windows once done
                 cam.release()
