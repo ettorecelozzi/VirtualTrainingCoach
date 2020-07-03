@@ -1,0 +1,34 @@
+Trainer amico di Luca 0
+Andrea 1
+Anna 2
+Ettore 3
+Luca 4 
+Sorella di Luca 5
+Troia bionda 6
+Margherita Bologna 7
+Matteo 8
+Down rosso squat 9
+Troia pant viola 10
+Senza maglia fintessfaq 11
+Maglia rossa push ups 12
+ragazzino senza maglia push ups 13
+senza maglia push ups pant grigio 14
+
+14 persone, 6 esercizi:
+arm-clap;
+single-lunges;
+double-lunges;
+dumbbell-curl;
+squat pov 0,45,90;
+push-ups pov 0,45,90;
+
+97 esecuzioni totali
+348 samples totali:
+Arm-clap: good=25; wrong=17; tot=42;
+Single-lunges: good=19; wrong=12; tot=31;
+Double-lunges: good=18; wrong=8; tot=26;
+Dumbbell-curl: good=20; wrong=17; tot=37;
+Squat: good=72; wrong=41; tot=113;
+Push-ups: good=51; wrong=48; tot=99;
+
+Notazione: *nome esercizio*_*id dell'esecutore*_c*ciclo appartente a ripetizioni dello stesso esercizio*
