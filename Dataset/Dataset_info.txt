@@ -23,12 +23,12 @@ squat pov 0,45,90;
 push-ups pov 0,45,90;
 
 97 esecuzioni totali
-348 samples totali:
-Arm-clap: good=25; wrong=17; tot=42;
-Single-lunges: good=19; wrong=12; tot=31;
-Double-lunges: good=18; wrong=8; tot=26;
-Dumbbell-curl: good=20; wrong=17; tot=37;
-Squat: good=72; wrong=41; tot=113;
-Push-ups: good=51; wrong=48; tot=99;
+348 samples totali + 348 flipped = 696:
+Arm-clap: good=25; wrong=17; tot=42 + 42 flipped = 84;
+Single-lunges: good=19; wrong=12; tot=31 + 31 flipped = 62;
+Double-lunges: good=18; wrong=8; tot=26 + 26 flipped = 52;
+Dumbbell-curl: good=20; wrong=17; tot=37 + 37 flipped = 74;
+Squat: good=72; wrong=41; tot=113 + 113 flipped = 226;
+Push-ups: good=51; wrong=48; tot=99 + 99 flipped = 198;
 
 Notazione: *nome esercizio*_*id dell'esecutore*_c*ciclo appartente a ripetizioni dello stesso esercizio*
