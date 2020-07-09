@@ -9,6 +9,7 @@ from Training import train
 import random
 from DevelopmentScripts.OPW import opw, transport_vector_to_path
 import pandas as pd
+import statistics
 
 pathToTrain = './Dataset/train/'
 pathToTest = './Dataset/test/'
@@ -61,6 +62,7 @@ def distance_between_sequences(X, Y, M, align_algorithm):
     resultDistances = []
     resultDistancesE = []
     dist, path = get_dist_T(align_algorithm, X, Y, M)
+    return dist
     for el in path:
         # MISSING metric that compute distance between joints
         resultDistances.append(mahalanobis_like_distance(X[el[0]], Y[el[1]], M))
@@ -167,10 +169,13 @@ def confusion_matrix(M, pathToSet, align_algorithm):
     return matrix
 
 
-align_algorithm = 'dtw'
+
 
 # training
-M = train(pathToSet=pathToTrain, align_algorithm=align_algorithm)
+# align_algorithm = 'opw'
+# M = train(pathToSet=dataset, align_algorithm=align_algorithm)
+# for align_algorithm in ['dtw','opw']:
+#     M = train(pathToSet=dataset, align_algorithm=align_algorithm)
 
 # conf_matrix = confusion_matrix(M, dataset + 'Keypoints/', align_algorithm)
 # dataframe = pd.DataFrame.from_dict(conf_matrix, orient='index')
@@ -189,3 +194,33 @@ M = train(pathToSet=pathToTrain, align_algorithm=align_algorithm)
 # X = np.load(pathToTrain + 'arm-clap/arm-clap_1_c0.npy')
 # Y = np.load(pathToTrain + 'arm-clap/arm-clap_1_c1.npy')
 # distance_between_sequences(X, Y, M, align_algorithm)
+#
+# exercises = ['arm-clap','double-lunges','single-lunges','dumbbell-curl','push-ups0','push-ups45','push-ups90', 'squat0','squat45','squat90']
+# for exercise in exercises:
+#     for align_algorithm in ['dtw','opw']:
+#         print(exercise + align_algorithm + '\n')
+#         train(pathToSet=pathToTrain,align_algorithm=align_algorithm,exercise=exercise)
+exercises = ['arm-clap','double-lunges','single-lunges','dumbbell-curl','push-ups0','push-ups45','push-ups90', 'squat0','squat45','squat90']
+for exercise in exercises:
+    print("----------" + exercise + '----------')
+    X = np.load(pathToTrain + exercise + '/good/' + exercise + '_0_c1.npy')
+    for align_algorithm in ['dtw','opw']:
+        print(align_algorithm + '---')
+        W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
+        M = np.dot(W, np.transpose(W))
+        testSamples = os.listdir(pathToTest + exercise + '/')
+        for type in testSamples:
+            distList = []
+            samples = os.listdir(pathToTest + exercise + '/' + type + '/')
+            for sample in samples:
+                Y = np.load(pathToTest + exercise + '/' + type + '/' + sample)
+                d = distance_between_sequences(X,Y,M,align_algorithm)
+                # print(type + ": " + str(d))
+                if align_algorithm == "dtw":
+                    distList.append(d)
+                else:
+                    distList.append(d[0])
+            mean = statistics.mean(distList)
+            std = statistics.stdev(distList)
+            print("mean " + type + ": " + str(mean) + "    -    std: " + str(std))
+    print("\n")

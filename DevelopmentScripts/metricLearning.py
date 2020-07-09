@@ -48,10 +48,10 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
     for k in range(maxIterations):
         printProgressBar(k, maxIterations, 'Iteration: ' + str(k) + '/' + str(maxIterations))
         loss = 0
-        # L_a = np.zeros(shape=(dim, dim))
-        # L_b = np.zeros(shape=(dim, downdim))
-        L_a = np.load(dataset + 'L_a_' + align_algorithm + '.npy')
-        L_b = np.load(dataset + 'L_b_' + align_algorithm + '.npy')
+        L_a = np.zeros(shape=(dim, dim))
+        L_b = np.zeros(shape=(dim, downdim))
+        # L_a = np.load(dataset + 'L_a_' + align_algorithm + '_step8.npy')
+        # L_b = np.load(dataset + 'L_b_' + align_algorithm + '_step8.npy')
         for c in range(classNum):
             for n in range(len(trainset[c])):
                 for i in range(trainset[c][n].shape[0] - 1):
@@ -76,9 +76,8 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
                 break
             else:
                 loss_old = loss
-    # np.save(dataset + 'L_a_' + align_algorithm + '.npy', L_a)
-    # np.save(dataset + 'L_b_' + align_algorithm + '.npy', L_b)
-    # np.save(dataset + 'T_' + align_algorithm + '.npy', T)
+    # np.save(dataset + 'L_a_' + align_algorithm + '_step8.npy', L_a)
+    # np.save(dataset + 'L_b_' + align_algorithm + '_step8.npy', L_b)
     return L
 
 

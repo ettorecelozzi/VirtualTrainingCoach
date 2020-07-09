@@ -31,7 +31,7 @@ def init_trainset(pathToTrain):
     return trainingSet
 
 
-def train(pathToSet, align_algorithm):
+def train(pathToSet, align_algorithm,exercise):
     """
     Compute the parameters matrix M and store the factorization W. M = W*W'
     :return: matrix M, shape=(d,d) with d dimension of pose
@@ -39,9 +39,11 @@ def train(pathToSet, align_algorithm):
     # training
     if 'W_' + align_algorithm + '.npy' not in os.listdir(pathToSet):
         # trainingSet = init_trainset(pathToSet + '/Keypoints/')
-        trainingSet = init_trainset(pathToSet + 'squat90/')
+        # exercise = 'arm-clap'
+        trainingSet = init_trainset(pathToSet + exercise + '/')
         W = optimize(trainingSet, templateNum=4, l=0.01, err_limit=0.01, align_algorithm=align_algorithm)
-        np.save(pathToSet + 'W_' + align_algorithm + '.npy', W)
+        np.save(pathToSet + 'W_' + exercise + "_" + align_algorithm + '.npy', W)
+        # np.save(pathToSet + 'W8_' + align_algorithm + '.npy', W)
     else:
         W = np.load(pathToSet + 'W_' + align_algorithm + '.npy')
     M = np.dot(W, np.transpose(W))
