@@ -200,27 +200,94 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 #     for align_algorithm in ['dtw','opw']:
 #         print(exercise + align_algorithm + '\n')
 #         train(pathToSet=pathToTrain,align_algorithm=align_algorithm,exercise=exercise)
-exercises = ['arm-clap','double-lunges','single-lunges','dumbbell-curl','push-ups0','push-ups45','push-ups90', 'squat0','squat45','squat90']
-for exercise in exercises:
-    print("----------" + exercise + '----------')
-    X = np.load(pathToTrain + exercise + '/good/' + exercise + '_0_c1.npy')
-    for align_algorithm in ['dtw','opw']:
-        print(align_algorithm + '---')
-        W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
-        M = np.dot(W, np.transpose(W))
-        testSamples = os.listdir(pathToTest + exercise + '/')
-        for type in testSamples:
-            distList = []
-            samples = os.listdir(pathToTest + exercise + '/' + type + '/')
-            for sample in samples:
-                Y = np.load(pathToTest + exercise + '/' + type + '/' + sample)
-                d = distance_between_sequences(X,Y,M,align_algorithm)
-                # print(type + ": " + str(d))
-                if align_algorithm == "dtw":
-                    distList.append(d)
-                else:
-                    distList.append(d[0])
-            mean = statistics.mean(distList)
-            std = statistics.stdev(distList)
-            print("mean " + type + ": " + str(mean) + "    -    std: " + str(std))
-    print("\n")
+# exercises = ['arm-clap','double-lunges','single-lunges','dumbbell-curl','push-ups0','push-ups45','push-ups90', 'squat0','squat45','squat90']
+# for exercise in exercises:
+#     print("----------" + exercise + '----------')
+#     X = np.load(pathToTrain + exercise + '/good/' + exercise + '_0_c1.npy')
+#     for align_algorithm in ['dtw','opw']:
+#         print(align_algorithm + '---')
+#         W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
+#         M = np.dot(W, np.transpose(W))
+#         testSamples = os.listdir(pathToTest + exercise + '/')
+#         for type in testSamples:
+#             distList = []
+#             samples = os.listdir(pathToTest + exercise + '/' + type + '/')
+#             for sample in samples:
+#                 Y = np.load(pathToTest + exercise + '/' + type + '/' + sample)
+#                 d = distance_between_sequences(X,Y,M,align_algorithm)
+#                 # print(type + ": " + str(d))
+#                 if align_algorithm == "dtw":
+#                     distList.append(d)
+#                 else:
+#                     distList.append(d[0])
+#             mean = statistics.mean(distList)
+#             std = statistics.stdev(distList)
+#             print("mean " + type + ": " + str(mean) + "    -    std: " + str(std))
+#     print("\n")
+
+
+def knn(k):
+    exercises = ['arm-clap', 'double-lunges', 'single-lunges', 'dumbbell-curl', 'push-ups0', 'push-ups45', 'push-ups90',
+                 'squat0', 'squat45', 'squat90']
+    for exercise in exercises:
+
+        print("----------" + exercise + '----------')
+        for align_algorithm in ['dtw', 'opw']:
+            print(align_algorithm + '---')
+            correctlyclassified = 0
+            wronglyclassified = 0
+            confmatrix = np.zeros(shape=(2,2))
+            W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
+            M = np.dot(W, np.transpose(W))
+            testSamples = os.listdir(pathToTest + exercise + '/')
+            for type in testSamples:
+                knearest = np.full(k,np.inf)
+                knearestclass = []
+                for i in range(k):
+                    knearestclass.append('good')
+                samples = os.listdir(pathToTest + exercise + '/' + type + '/')
+                for sample in samples:
+                    Y = np.load(pathToTest + exercise + '/' + type + '/' + sample)
+                    ###find k nearest neighbors
+                    trainSamples = os.listdir(pathToTrain + exercise + '/')
+                    for trainType in trainSamples:
+                        tsamples = os.listdir(pathToTrain + exercise + '/' + trainType + '/')
+                        for tsample in tsamples:
+                            X = np.load(pathToTrain + exercise + '/' + trainType + '/' + tsample)
+                            if align_algorithm == "dtw":
+                                d = distance_between_sequences(X,Y,M,align_algorithm)
+                            else:
+                                d = distance_between_sequences(X, Y, M, align_algorithm)[0]
+                            m = np.max(knearest)
+                            if np.isinf(m) or d < m:
+                                idx = np.where(knearest==m)[0][0]
+                                knearest[idx] = d
+                                knearestclass[idx] = trainType
+                    countgood = 0
+                    countwrong = 0
+                    for el in knearestclass:
+                        if el == "good":
+                            countgood += 1
+                        else:
+                            countwrong += 1
+                    if countgood > countwrong:
+                        if type == "good":
+                            correctlyclassified +=1
+                            confmatrix[0][0] += 1
+                        else:
+                            wronglyclassified += 1
+                            confmatrix[0][1] += 1
+                    else:
+                        if type == "wrong":
+                            correctlyclassified +=1
+                            confmatrix[1][1] += 1
+                        else:
+                            wronglyclassified += 1
+                            confmatrix[1][0] += 1
+            accuracy = correctlyclassified / (correctlyclassified+wronglyclassified)
+            print("accuracy: " + str(accuracy))
+            print("\n")
+            print(confmatrix)
+            print("\n")
+
+knn(3)
