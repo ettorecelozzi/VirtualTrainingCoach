@@ -229,10 +229,10 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 def knn(k):
     exercises = ['arm-clap', 'double-lunges', 'single-lunges', 'dumbbell-curl', 'push-ups0', 'push-ups45', 'push-ups90',
                  'squat0', 'squat45', 'squat90']
-    for exercise in exercises:
+    for exercise in exercises:#per ogni esercizio
 
         print("----------" + exercise + '----------')
-        for align_algorithm in ['dtw', 'opw']:
+        for align_algorithm in ['dtw', 'opw']:#per ogni tipo di algoritmo di allineamento
             print(align_algorithm + '---')
             correctlyclassified = 0
             wronglyclassified = 0
@@ -241,12 +241,16 @@ def knn(k):
             M = np.dot(W, np.transpose(W))
             testSamples = os.listdir(pathToTest + exercise + '/')
             for type in testSamples:
-                knearest = np.full(k,np.inf)
-                knearestclass = []
-                for i in range(k):
-                    knearestclass.append('good')
                 samples = os.listdir(pathToTest + exercise + '/' + type + '/')
-                for sample in samples:
+
+                listcorrectlyclassified = []
+                listwronglyclassified = []
+                listconfmatrix = []
+                for sample in samples:#per ogni esempio di test
+                    knearest = np.full(k, np.inf)
+                    knearestclass = []
+                    for i in range(k):
+                        knearestclass.append('good')
                     Y = np.load(pathToTest + exercise + '/' + type + '/' + sample)
                     ###find k nearest neighbors
                     trainSamples = os.listdir(pathToTrain + exercise + '/')
@@ -263,31 +267,37 @@ def knn(k):
                                 idx = np.where(knearest==m)[0][0]
                                 knearest[idx] = d
                                 knearestclass[idx] = trainType
-                    countgood = 0
-                    countwrong = 0
-                    for el in knearestclass:
-                        if el == "good":
-                            countgood += 1
+                    for kk in range(1,k,2):
+                        countgood = 0
+                        countwrong = 0
+                        idxs = knearest.argsort()[:kk]
+                        for el in knearestclass[idxs]:
+                            if el == "good":
+                                countgood += 1
+                            else:
+                                countwrong += 1
+                        if countgood > countwrong:
+                            if type == "good":
+                                correctlyclassified +=1
+                                confmatrix[0][0] += 1
+                            else:
+                                wronglyclassified += 1
+                                confmatrix[0][1] += 1
                         else:
-                            countwrong += 1
-                    if countgood > countwrong:
-                        if type == "good":
-                            correctlyclassified +=1
-                            confmatrix[0][0] += 1
-                        else:
-                            wronglyclassified += 1
-                            confmatrix[0][1] += 1
-                    else:
-                        if type == "wrong":
-                            correctlyclassified +=1
-                            confmatrix[1][1] += 1
-                        else:
-                            wronglyclassified += 1
-                            confmatrix[1][0] += 1
-            accuracy = correctlyclassified / (correctlyclassified+wronglyclassified)
-            print("accuracy: " + str(accuracy))
-            print("\n")
-            print(confmatrix)
-            print("\n")
+                            if type == "wrong":
+                                correctlyclassified +=1
+                                confmatrix[1][1] += 1
+                            else:
+                                wronglyclassified += 1
+                                confmatrix[1][0] += 1
+                        listcorrectlyclassified.append(correctlyclassified)
+                        listwronglyclassified.append(wronglyclassified)
+                        listconfmatrix.append(confmatrix)
+            for kk in range(1,k,2):
+                accuracy = listcorrectlyclassified[kk//2] / (listcorrectlyclassified[kk//2] + listwronglyclassified[kk//2])
+                # accuracy = correctlyclassified / (correctlyclassified + wronglyclassified)
+                print("accuracy k= " + str(kk) + ': ' + str(accuracy))
+                print(listconfmatrix[kk//2])
+                print("\n")
 
-knn(3)
+knn(5)
