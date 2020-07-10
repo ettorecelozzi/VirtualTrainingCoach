@@ -3,8 +3,11 @@ import fastdtw
 from DevelopmentScripts.OPW import opw
 from DevelopmentScripts.Utility import printProgressBar
 
-dataset = './MSRDataset/'
-def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1=10, lambda2=0.5, sigma=12):
+dataset = './MSRDataset-old/OnevsAll/'
+
+
+def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1=10, lambda2=0.5, sigma=12,
+             previousExercise=None, exercise=None):
     """
     :param trainset: list containing the training sequences divided by class
                         trainset: a list with size of (1, the number of classes);
@@ -46,17 +49,20 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
     loss_old = 10 ^ 8
     maxIterations = 1000
     for k in range(maxIterations):
-        printProgressBar(k, maxIterations, 'Iteration: ' + str(k) + '/' + str(maxIterations))
+        printProgressBar(k, maxIterations, 'Iterations of ' + exercise + ': ' + str(k) + '/' + str(maxIterations))
         loss = 0
-        L_a = np.zeros(shape=(dim, dim))
-        L_b = np.zeros(shape=(dim, downdim))
-        # L_a = np.load(dataset + 'L_a_' + align_algorithm + '_step8.npy')
-        # L_b = np.load(dataset + 'L_b_' + align_algorithm + '_step8.npy')
+        if previousExercise is None:
+            L_a = np.zeros(shape=(dim, dim))
+            L_b = np.zeros(shape=(dim, downdim))
+        else:
+            L_a = np.load(dataset + 'L_a_' + align_algorithm + '_' + previousExercise + '.npy')
+            L_b = np.load(dataset + 'L_b_' + align_algorithm + '_' + previousExercise + '.npy')
         for c in range(classNum):
             for n in range(len(trainset[c])):
                 for i in range(trainset[c][n].shape[0] - 1):
                     for j in range(V[c].shape[0] - 1):
-                        L_a += T[c][n][i][j] * np.expand_dims(trainset[c][n][i], 1).dot(np.transpose(np.expand_dims(trainset[c][n][i], 1)))
+                        L_a += T[c][n][i][j] * np.expand_dims(trainset[c][n][i], 1).dot(
+                            np.transpose(np.expand_dims(trainset[c][n][i], 1)))
                         v = np.transpose(np.expand_dims(V[c][j], 1))
                         L_b += T[c][n][i][j] * np.expand_dims(trainset[c][n][i], 1).dot(v)
             # update L
@@ -69,15 +75,15 @@ def optimize(trainset, templateNum, l, err_limit, align_algorithm="dtw", lambda1
                     T[c][n] = pathToMat(path, T[c][n])
                 else:
                     d, T[c][n] = opw(trainset[c][n].dot(L), V[c], a=None, b=None, lambda1=lambda1, lambda2=lambda2,
-                                   sigma=sigma, VERBOSE=0)
+                                     sigma=sigma, VERBOSE=0)
                 loss = loss + d
             loss = loss / N + np.trace(L.dot(np.transpose(L)))
             if abs(loss - loss_old) < err_limit:
                 break
             else:
                 loss_old = loss
-    # np.save(dataset + 'L_a_' + align_algorithm + '_step8.npy', L_a)
-    # np.save(dataset + 'L_b_' + align_algorithm + '_step8.npy', L_b)
+    # np.save(dataset + 'L_a_' + align_algorithm + '_' + exercise + '.npy', L_a)
+    # np.save(dataset + 'L_b_' + align_algorithm + '_' + exercise + '.npy', L_b)
     return L
 
 

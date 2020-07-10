@@ -10,6 +10,11 @@ import random
 from DevelopmentScripts.OPW import opw, transport_vector_to_path
 import pandas as pd
 import statistics
+from sklearn.metrics import confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import DistanceMetric
+import csv
 
 pathToTrain = './Dataset/train/'
 pathToTest = './Dataset/test/'
@@ -63,11 +68,11 @@ def distance_between_sequences(X, Y, M, align_algorithm):
     resultDistancesE = []
     dist, path = get_dist_T(align_algorithm, X, Y, M)
     return dist
-    for el in path:
-        # MISSING metric that compute distance between joints
-        resultDistances.append(mahalanobis_like_distance(X[el[0]], Y[el[1]], M))
-        resultDistancesE.append(np.linalg.norm(X[el[0]] - Y[el[1]]))
-    return resultDistances
+    # for el in path:
+    #     # MISSING metric that compute distance between joints
+    #     resultDistances.append(mahalanobis_like_distance(X[el[0]], Y[el[1]], M))
+    #     resultDistancesE.append(np.linalg.norm(X[el[0]] - Y[el[1]]))
+    # return resultDistances
 
 
 def test_in_same_class(M, align_algorithm):
@@ -169,8 +174,6 @@ def confusion_matrix(M, pathToSet, align_algorithm):
     return matrix
 
 
-
-
 # training
 # align_algorithm = 'opw'
 # M = train(pathToSet=dataset, align_algorithm=align_algorithm)
@@ -206,7 +209,7 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 #     X = np.load(pathToTrain + exercise + '/good/' + exercise + '_0_c1.npy')
 #     for align_algorithm in ['dtw','opw']:
 #         print(align_algorithm + '---')
-#         W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
+#         W = np.load('./Dataset/OnevsAll/NoBaseline/' + 'W_' + exercise + '_' + align_algorithm + '.npy')
 #         M = np.dot(W, np.transpose(W))
 #         testSamples = os.listdir(pathToTest + exercise + '/')
 #         for type in testSamples:
@@ -229,30 +232,30 @@ def confusion_matrix(M, pathToSet, align_algorithm):
 def knn(k):
     exercises = ['arm-clap', 'double-lunges', 'single-lunges', 'dumbbell-curl', 'push-ups0', 'push-ups45', 'push-ups90',
                  'squat0', 'squat45', 'squat90']
-    for exercise in exercises:#per ogni esercizio
+    for exercise in exercises:  # per ogni esercizio
 
         print("----------" + exercise + '----------')
-        for align_algorithm in ['dtw', 'opw']:#per ogni tipo di algoritmo di allineamento
+        for align_algorithm in ['dtw', 'opw']:  # per ogni tipo di algoritmo di allineamento
             print(align_algorithm + '---')
             correctlyclassified = 0
             wronglyclassified = 0
 
-            listcorrectlyclassified = [] #lists for each different k
+            listcorrectlyclassified = []  # lists for each different k
             listwronglyclassified = []
             listconfmatrix = []
-            for i in range(1,k,2):
+            for i in range(1, k, 2):
                 listcorrectlyclassified.append(0)
                 listwronglyclassified.append(0)
-                confm = np.zeros(shape=(2,2))
+                confm = np.zeros(shape=(2, 2))
                 listconfmatrix.append(confm)
 
-            W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
+            W = np.load('./Dataset/OnevsAll/Baseline/' + 'W_' + exercise + '_' + align_algorithm + '.npy')
             M = np.dot(W, np.transpose(W))
             testSamples = os.listdir(pathToTest + exercise + '/')
             for type in testSamples:
                 samples = os.listdir(pathToTest + exercise + '/' + type + '/')
 
-                for sample in samples:#per ogni esempio di test
+                for sample in samples:  # per ogni esempio di test
                     knearest = np.full(k, np.inf)
                     knearestclass = []
                     for i in range(k):
@@ -265,15 +268,15 @@ def knn(k):
                         for tsample in tsamples:
                             X = np.load(pathToTrain + exercise + '/' + trainType + '/' + tsample)
                             if align_algorithm == "dtw":
-                                d = distance_between_sequences(X,Y,M,align_algorithm)
+                                d = distance_between_sequences(X, Y, M, align_algorithm)
                             else:
                                 d = distance_between_sequences(X, Y, M, align_algorithm)[0]
                             m = np.max(knearest)
                             if np.isinf(m) or d < m:
-                                idx = np.where(knearest==m)[0][0]
+                                idx = np.where(knearest == m)[0][0]
                                 knearest[idx] = d
                                 knearestclass[idx] = trainType
-                    for kk in range(1,k,2):
+                    for kk in range(1, k, 2):
                         countgood = 0
                         countwrong = 0
                         idxs = knearest.argsort()[:kk]
@@ -285,24 +288,71 @@ def knn(k):
                                 countwrong += 1
                         if countgood > countwrong:
                             if type == "good":
-                                listcorrectlyclassified[kk//2] += 1
-                                listconfmatrix[kk//2][0][0] += 1
+                                listcorrectlyclassified[kk // 2] += 1
+                                listconfmatrix[kk // 2][0][0] += 1
                             else:
-                                listwronglyclassified[kk//2] += 1
-                                listconfmatrix[kk//2][0][1] += 1
+                                listwronglyclassified[kk // 2] += 1
+                                listconfmatrix[kk // 2][0][1] += 1
                         else:
                             if type == "wrong":
-                                listcorrectlyclassified[kk//2] +=1
-                                listconfmatrix[kk//2][1][1] += 1
+                                listcorrectlyclassified[kk // 2] += 1
+                                listconfmatrix[kk // 2][1][1] += 1
                             else:
-                                listwronglyclassified[kk//2] += 1
-                                listconfmatrix[kk//2][1][0] += 1
+                                listwronglyclassified[kk // 2] += 1
+                                listconfmatrix[kk // 2][1][0] += 1
 
-            for kk in range(1,k,2):
-                accuracy = listcorrectlyclassified[kk//2] / (listcorrectlyclassified[kk//2] + listwronglyclassified[kk//2])
+            for kk in range(1, k, 2):
+                accuracy = listcorrectlyclassified[kk // 2] / (
+                        listcorrectlyclassified[kk // 2] + listwronglyclassified[kk // 2])
                 # accuracy = correctlyclassified / (correctlyclassified + wronglyclassified)
                 print("accuracy k= " + str(kk) + ': ' + str(accuracy))
-                print(listconfmatrix[kk//2])
+                print(listconfmatrix[kk // 2])
                 print("\n")
 
+
 knn(15)
+
+def distance_between_sequences_KNN(X, Y, **kwargs):
+    # Keypoints normalization
+    meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(X, 50)
+    X = norm.normalize(meanTorso, meanHipX, meanHipY, X.copy())
+    X = X.reshape((X.shape[0], X.shape[1] * X.shape[2]))
+
+    # Keypoints normalization
+    meanTorso, meanHipX, meanHipY = PoseAnalysis.getMeanMeasures(Y, 50)
+    Y = norm.normalize(meanTorso, meanHipX, meanHipY, Y.copy())
+    Y = Y.reshape((Y.shape[0], Y.shape[1] * Y.shape[2]))
+
+    align_algorithm = kwargs['metric_params']['align_algorithm']
+    M = kwargs['metric_params']['M']
+    dist, path = get_dist_T(align_algorithm, X=X, Y=Y, M=M)
+    return dist
+
+
+def KNNScipy(exercise, k, align_algorithm):
+    namesTrain, Ytrain = [], []
+    with open("./DatasetML/train/" + exercise + ".csv") as csvFile:
+        reader = csv.reader(csvFile, delimiter=',')
+        for row in reader:
+            namesTrain.append(row[0])  # name of the keypoints files
+            Ytrain.append(row[1])  # label of the file, 0 wrong 1 good
+    Xtrain = [np.load("./DatasetML/train/" + exercise.capitalize() + "/" + name + ".npy") for name in namesTrain]
+    print(len(Xtrain), len(Xtrain[0]), len(Xtrain[0][0]), len(Xtrain[0][0][0]))
+
+    namesTest, Ytest = [], []
+    with open("./DatasetML/test/" + exercise + ".csv") as csvFile:
+        reader = csv.reader(csvFile, delimiter=',')
+        for row in reader:
+            namesTest.append(row[0])  # name of the keypoints files
+            Ytest.append(row[1])  # label of the file, 0 wrong 1 good
+    Xtest = [np.load("./DatasetML/test/" + exercise.capitalize() + "/" + name + ".npy") for name in namesTest]
+    print(len(Xtest), len(Ytest))
+
+    W = np.load("./DatasetML/train/W_" + exercise + "_" + align_algorithm + ".npy")
+    M = np.dot(W, np.transpose(W))
+    knn = KNeighborsClassifier(n_neighbors=k, metric=distance_between_sequences_KNN,
+                               metric_params={"align_algorithm": align_algorithm, "M": M})
+    knn.fit(Xtrain, Ytrain)
+
+
+# KNNScipy("arm-clap", 5, "dtw")

@@ -4,11 +4,12 @@ import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 import os
 import numpy as np
-from DevelopmentScripts.KeyPointsFromImage import plotKeyPointsImage
+# from DevelopmentScripts.KeyPointsFromImage import plotKeyPointsImage
 import cv2
 import shutil
 from os import listdir
 import difflib
+import csv
 
 
 def serializeKeyPointsSequence(keyPointsSequence, weights=None):
@@ -328,3 +329,15 @@ def printProgressBar(iteration, total, prefix='Progress:', suffix='', decimals=1
     # Print New Line on Complete
     if iteration == total:
         print()
+
+
+def createCSV(exercise):
+    samples = os.listdir('../DatasetML/test/' + exercise.capitalize())
+    with open('../DatasetML/test/' + exercise + '.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for sample in samples:
+            if "wrong" in sample:
+                writer.writerow([sample[:len(sample) - 4], 0])
+            else:
+                writer.writerow([sample[:len(sample) - 4], 1])
+
