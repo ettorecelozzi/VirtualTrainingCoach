@@ -285,7 +285,7 @@ def knn(k):
                                 countwrong += 1
                         if countgood > countwrong:
                             if type == "good":
-                                listcorrectlyclassified[kk//2] = 1
+                                listcorrectlyclassified[kk//2] += 1
                                 listconfmatrix[kk//2][0][0] += 1
                             else:
                                 listwronglyclassified[kk//2] += 1
