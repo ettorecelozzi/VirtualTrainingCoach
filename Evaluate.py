@@ -236,16 +236,22 @@ def knn(k):
             print(align_algorithm + '---')
             correctlyclassified = 0
             wronglyclassified = 0
-            confmatrix = np.zeros(shape=(2,2))
+
+            listcorrectlyclassified = [] #lists for each different k
+            listwronglyclassified = []
+            listconfmatrix = []
+            for i in range(1,k,2):
+                listcorrectlyclassified.append(0)
+                listwronglyclassified.append(0)
+                confm = np.zeros(shape=(2,2))
+                listconfmatrix.append(confm)
+
             W = np.load(pathToTrain + 'W_' + exercise + '_' + align_algorithm + '.npy')
             M = np.dot(W, np.transpose(W))
             testSamples = os.listdir(pathToTest + exercise + '/')
             for type in testSamples:
                 samples = os.listdir(pathToTest + exercise + '/' + type + '/')
 
-                listcorrectlyclassified = []
-                listwronglyclassified = []
-                listconfmatrix = []
                 for sample in samples:#per ogni esempio di test
                     knearest = np.full(k, np.inf)
                     knearestclass = []
@@ -271,28 +277,27 @@ def knn(k):
                         countgood = 0
                         countwrong = 0
                         idxs = knearest.argsort()[:kk]
-                        for el in knearestclass[idxs]:
+                        T = [knearestclass[i] for i in idxs]
+                        for el in T:
                             if el == "good":
                                 countgood += 1
                             else:
                                 countwrong += 1
                         if countgood > countwrong:
                             if type == "good":
-                                correctlyclassified +=1
-                                confmatrix[0][0] += 1
+                                listcorrectlyclassified[kk//2] = 1
+                                listconfmatrix[kk//2][0][0] += 1
                             else:
-                                wronglyclassified += 1
-                                confmatrix[0][1] += 1
+                                listwronglyclassified[kk//2] += 1
+                                listconfmatrix[kk//2][0][1] += 1
                         else:
                             if type == "wrong":
-                                correctlyclassified +=1
-                                confmatrix[1][1] += 1
+                                listcorrectlyclassified[kk//2] +=1
+                                listconfmatrix[kk//2][1][1] += 1
                             else:
-                                wronglyclassified += 1
-                                confmatrix[1][0] += 1
-                        listcorrectlyclassified.append(correctlyclassified)
-                        listwronglyclassified.append(wronglyclassified)
-                        listconfmatrix.append(confmatrix)
+                                listwronglyclassified[kk//2] += 1
+                                listconfmatrix[kk//2][1][0] += 1
+
             for kk in range(1,k,2):
                 accuracy = listcorrectlyclassified[kk//2] / (listcorrectlyclassified[kk//2] + listwronglyclassified[kk//2])
                 # accuracy = correctlyclassified / (correctlyclassified + wronglyclassified)
@@ -300,4 +305,4 @@ def knn(k):
                 print(listconfmatrix[kk//2])
                 print("\n")
 
-knn(5)
+knn(15)
