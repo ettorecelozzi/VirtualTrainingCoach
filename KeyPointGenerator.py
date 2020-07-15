@@ -24,9 +24,10 @@ op, opWrapper = opinit()
 #     ex_name = file.split('.')[0]
 #     np.save('./Yoga/Yoga Keypoints/' + ex_name + '.npy', kps[:, :2])
 
-folder = 'Squat/'
+folder = 'NewVideos/'
 f = ''
 videoNames = listdir('./Dataset/Videos/' + folder)
+# videoNames = ['push-ups45_wrong_8.mp4']
 for videoname in videoNames:
     # Generate and save trainer skeleton keypoints
     videoname = videoname[:len(videoname) - 4]
