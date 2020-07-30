@@ -28,14 +28,15 @@ def opw(x, y, a=None, b=None, lambda1=10, lambda2=0.5, sigma=12, VERBOSE=1):
     mid_para = np.sqrt(1 / np.power(N, 2) + 1 / np.power(M, 2))
     for i in range(N):
         for j in range(M):
-            diag = np.abs(i / N - j / M) / mid_para
+            # indexing starts from 0, but we are considering the first position
+            diag = np.abs((i + 1) / N - (j + 1) / M) / mid_para
 
             # Gaussian distribution centered at the intersection on the diagonal
             # (prior distribution of the transport matrix)
             p[i, j] = np.exp(-np.power(diag, 2) / 2 * np.power(sigma, 2)) / (sigma * np.sqrt(2 * np.pi))
 
             # constant defined at page 6 of the OPW paper
-            s[i, j] = lambda1 / (np.power((i / N - j / M), 2) + 1)
+            s[i, j] = lambda1 / (np.power(((i + 1) / N - (j + 1) / M), 2) + 1)
 
     # pairwise distance between x and y
     d = cdist(x, y, 'sqeuclidean')
